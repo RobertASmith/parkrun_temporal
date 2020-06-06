@@ -1,0 +1,244 @@
+---
+title: "R Notebook"
+output: html_notebook
+date: 2020-06-05
+---
+
+# Equality in access to and participation in parkrun events in England over time
+
+## Introduction
+
+
+## Load packages
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+library(reshape2)
+library(data.table)
+library(raster)
+library(geosphere)
+library(ggplot2)
+library(scales)
+```
+
+
+## global options
+```{r}
+options(scipen = 99)
+```
+
+
+## Load data
+
+ 1. IMD data
+ 
+```{r}
+  # 2015 IMD scores
+  lsoa_imd = read.csv("./IMD_data.csv") %>% # read csv
+    dplyr::select(c("LSOA.code..2011.","Index.of.Multiple.Deprivation..IMD..Score", # select relevant colums
+             "Index.of.Multiple.Deprivation..IMD..Decile..where.1.is.most.deprived.10..of.LSOAs.",
+             "Total.population..mid.2012..excluding.prisoners.")) %>%
+    'colnames<-'(c("lsoa","imd_score","imd_decile","total_pop")) # rename columns
+  head(lsoa_imd)
+
+
+# LSOA run data 2010-2020
+  runs_df = readRDS("./runs_per_lsoa_2010to2020.Rds")
+  runs_df = as.data.table(runs_df)
+  runs_df = runs_df[grep(pattern = "E",runs_df$lsoa),] # restrict to England
+  runs_df$date = as.Date(as.character(runs_df$date))
+  runs_df$year = format(runs_df$date,format="%Y") 
+  runs_df$month_year = format(runs_df$date,format="%Y-%m") 
+  head(runs_df)
+  
+  # # SOmething is going on here...
+  # length(lsoa_imd$lsoa)
+  # length(unique(runs_df$lsoa))
+  # sum(unique(runs_df$lsoa) %in% lsoa_imd$lsoa)
+  # sum(lsoa_imd$lsoa %in% unique(runs_df$lsoa))
+  # # eg: E01002524  WHAT IS THIS????
+  # runs_lsoa_uniq = data.frame(lsoa_01 =unique(runs_df$lsoa)) 
+  # lsoa01_lsoa11 = read.csv("Lower_Layer_Super_Output_Area__2001__to_Lower_Layer_Super_Output_Area__2011__to_Local_Authority_District__2011__Lookup_in_England_and_Wales.csv")
+  # lsoa01_lsoa11 = lsoa01_lsoa11[,c("LSOA01CD","LSOA11CD")]
+  # names(lsoa01_lsoa11) = c("lsoa_01","lsoa_11")
+  # runs_lsoa_uniq$lsoa_01 %in% lsoa01_lsoa11$lsoa_01
+  # runs_lsoa_uniq$lsoa_01 %in% c(lsoa01_lsoa11$lsoa_1,lsoa01_lsoa11$lsoa_11)
+  # 
+  
+    
+# descriptive TS: weekly runs over time
+  monthly_runs_TS = aggregate(finishers ~ month_year,runs_df,sum)
+  monthly_runs_TS$month_year = as.Date(paste(monthly_runs_TS$month_year,"-01",sep=""))
+
+  ggplot(monthly_runs_TS,aes(x=month_year,y=finishers)) +
+    geom_point() +
+    geom_line(size=0.5) +
+    geom_smooth(se=F) +
+    scale_y_continuous(labels=scales::label_number(big.mark = ",")) + 
+    scale_x_date(labels=scales::label_date(format = "%Y"),date_breaks = "years") + 
+    xlab("Date") +
+    ylab("Total parkun finishers in England per month") +
+    theme_minimal()  +
+    theme(axis.text.x = element_text(angle = 45))
+
+```
+
+
+## create analysis dfs
+
+```{r}
+# RUNS BY YEAR AND IMD DECILE
+# aggregate by lsoa and year
+  dat = aggregate(finishers ~ year + lsoa,runs_df,sum)
+# fill in missings
+  expanded = expand.grid(unique(dat$year),lsoa_imd$lsoa)
+  names(expanded) = c("year","lsoa")
+  dat = merge(expanded,dat,by=c("year","lsoa"),all.x=T)
+  dat$finishers[is.na(dat$finishers)] = 0 
+  
+  # # CAVE: LSOA CODE PROBLEM !!!!
+  # # Something is wrong with the codes
+  length(unique(dat$lsoa))
+  
+# IMD decile
+  dat = merge(dat,lsoa_imd,by="lsoa",all.x=F,all.y=T)
+  length(unique(dat$lsoa))
+  check_lsoa_zeros = aggregate(finishers ~year,dat,function(x){round(sum(x==0)/length(x),4)*100})
+  check_lsoa_runs = aggregate(finishers ~year,dat,function(x){round(sum(x!=0)/length(x),4)*100})
+  check_lsoa = merge(check_lsoa_zeros,check_lsoa_runs,by="year")
+  check_lsoa[order(as.character(check_lsoa$year)),]
+```
+
+
+## Spatial data
+```{r}
+
+# LSOA data
+  # LSOA pop-weighted centroids
+  lsoa_locations = shapefile("./England_lsoa_2011_centroids/england_lsoa_2011_centroids.shp")
+  # use correct projection
+  lsoa_locations = spTransform(lsoa_locations,crs("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+  lsoa_centr = coordinates(lsoa_locations)
+  rownames(lsoa_centr) = lsoa_locations$code
+  
+# parkrun event locations
+  event_locations = read.csv("./event_info_20181212.csv")
+  event_locations$year = substr(event_locations$Estblsh,1,4)
+  event_locations$Estblsh = as.Date(event_locations$Estblsh)
+  
+# distance matrix
+  distM = geosphere::distm(x= lsoa_locations,y=cbind(event_locations$lng,event_locations$lat))
+  rownames(distM) = rownames(lsoa_centr)
+  colnames(distM) = event_locations$course
+  
+  get_min_dist = function(available_event_cols = T,distance_matrix  = distM,year=2010){
+     Mat = distance_matrix[,available_event_cols]
+     min_dist = apply(Mat,1,min)
+     min_dist_df = data.frame(lsoa = rownames(Mat),year=year,access=min_dist)
+     return(min_dist_df)
+  }
+  
+```
+
+## access loop (YEARS)
+```{r}
+distance.df.temp = c()
+years_l = as.numeric(as.character(unique(dat$year)))
+years_l = years_l[years_l < 2019] # we need new parkrun event data for this!
+  
+for(y in years_l){
+    print(y)
+    events_in_operation = event_locations$year <= y
+    temp.dist = get_min_dist(available_event_cols = events_in_operation,year = y)
+    distance.df.temp = rbind(distance.df.temp,temp.dist)
+  }
+
+head(distance.df.temp)
+dim(distance.df.temp)
+
+# merge with dat
+dat = merge(dat,distance.df.temp,by=c("lsoa","year"),all.x=F) # remove 2019
+head(dat)
+```
+
+
+
+## VISUALISATION
+
+### access
+```{r}
+med_acc_by_imd = aggregate(access~imd_decile+year,dat,median)
+med_acc_by_imd$year = as.numeric(as.character(med_acc_by_imd$year))
+
+ggplot(med_acc_by_imd,aes(x=as.numeric(year),y=access,col=as.factor(imd_decile))) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+bottom_access = med_acc_by_imd[med_acc_by_imd$imd_decile==1,]
+top_access = med_acc_by_imd[med_acc_by_imd$imd_decile==10,]
+tb_access = merge(top_access,bottom_access,by="year",suffixes=c(".top",".bot"))
+tb_access$tb_ratio = tb_access$access.top/tb_access$access.bot
+tb_access$tb_diff = tb_access$access.top-tb_access$access.bot
+tb_ratio_access = reshape2::melt(tb_access,id.vars = c("year"),measure.var="tb_ratio")
+tb_diff_access = reshape2::melt(tb_access,id.vars = c("year"),measure.var="tb_diff")
+
+ggplot(tb_ratio_access,aes(x=as.numeric(year),y=value)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+ggplot(tb_diff_access,aes(x=as.numeric(year),y=value)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+```
+access is measured in distance, so higher acces is worse i.e. ratio > 1 indicates poorer access... confusing
+
+Anyway, top has worse access than bottom. but access is getting more equal since 2011
+
+
+### participation
+```{r}
+part_by_imd = aggregate(finishers~imd_decile+year,dat,sum)
+part_by_imd$year = as.numeric(as.character(part_by_imd$year))
+
+ggplot(part_by_imd,aes(x=as.numeric(year),y=finishers,col=as.factor(imd_decile))) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+bottom_part = part_by_imd[part_by_imd$imd_decile==1,]
+top_part = part_by_imd[part_by_imd$imd_decile==10,]
+tb_part = merge(top_part,bottom_part,by="year",suffixes=c(".top",".bot"))
+tb_part$tb_ratio = tb_part$finishers.top/tb_part$finishers.bot
+tb_part$tb_diff = tb_part$finishers.top-tb_part$finishers.bot
+tb_ratio_part = reshape2::melt(tb_part,id.vars = c("year"),measure.var="tb_ratio")
+tb_diff_part = reshape2::melt(tb_part,id.vars = c("year"),measure.var="tb_diff")
+
+ggplot(tb_ratio_part,aes(x=as.numeric(year),y=value)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+ggplot(tb_diff_part,aes(x=as.numeric(year),y=value)) +
+  geom_point() +
+  geom_line() +
+  theme_minimal()
+
+```
+ratio shows: relative irpovement until 2014
+but diff shows: abs. inequality increases
+
+
+### ratios combined
+
+```{r}
+ggplot() +
+  geom_point(data=tb_ratio_part,aes(x=as.numeric(year),y=value,col="part")) +
+  geom_line(data=tb_ratio_part,aes(x=as.numeric(year),y=value,col="part")) +
+  geom_point(data=tb_ratio_access,aes(x=as.numeric(year),y=value,col="access")) +
+  geom_line(data=tb_ratio_access,aes(x=as.numeric(year),y=value,col="access")) +
+  theme_minimal()
+
+```
