@@ -26,10 +26,11 @@ options(scipen = 99)
 
 #### Overview
 
-  We combine data on community deprivation with information on access to parkrun events and participation therein, and assess the the socioeconomic gradient in access and participation using the slope index of inequality. We then study trends in these characteristics over time.
+  Our previous analysis published in [Wellcome Open Research](https://wellcomeopenresearch.org/articles/5-9) used data from 2018 to investigate parkrun participation at one point in time. We found that participation in parkrun was much **worse** in areas with high levels of deprivation than areas with low levels of deprivation. This effect was shown to persist, even when controlling for ethnic density. However, in another study we found that that those living in more deprived areas tend to have **better** geographic access to parkrun than those living in less deprived areas [Schneider et al., 2019](https://www.medrxiv.org/content/10.1101/19004143v1). parkrun were particularly interested in these studies, since they aim to "promote participation by those who are least active and/or have lower levels of health" [parkrunBlog](https://blog.parkrun.com/uk/2018/04/25/a-healthier-and-happier-planet/), in particular targetting more deprived communities [Sport England](https://blog.parkrun.com/uk/2018/12/12/sportenglandfunding/). They requested that we use historical data to investigate the trends in the efficiency (overall) and equity (between groups) of access and participation.
+   
+  We combine data on community deprivation with information on access to parkrun events and participation therein, and assess the socioeconomic gradient in access and participation using the Relative Index of Inequality. We then study trends in these characteristics for the period from 2010 to 2019.
 
-  All analyses are conducted on the level of **lower layer super output areas (LSOAs)** are census areas define dy the English National Office of Statistics. There are 32,844 LSOAs in England. On average, they contain a population of about 1,700 individuals.  
-  
+  All analyses are conducted on the level of **Lower layer Super Output Areas (LSOAs)**, census areas defined dy the English National Office of Statistics (ONS). There are 32,844 LSOAs in England with a mean opulation of about 1,700 individuals.
 
 #### Preparation
 
@@ -42,32 +43,35 @@ rm(list=ls())
 
 ```{r message=FALSE, warning=FALSE}
 # Load the required packages
-library(dplyr)
-library(reshape2)
-library(data.table)
+library(dplyr)       # for use of pipes
+library(reshape2)    # to transform from wide-long long-wide
+library(data.table)  # faster carpentry.
 # library(date)
-library(raster)
-library(geosphere)
-library(ggplot2)
-library(scales)
-library(RColorBrewer)
+library(raster)    
+library(geosphere) # used to find geodesic distances
+library(ggplot2)   # to make plots
+library(scales)    # to make plots
+library(RColorBrewer) # to make plots
 ```
 
 #### Data sets
 
 The following data sets are used for the analysis:
 
-  1. parkrun participation: the dataset contains information on the number of individuals from all Lower-Layer Super Output areas (LSOAs) who finished a parkun in any given week from January 1st 2010 to December 28th 2019.
+| Name     | Source     | Description  |
+| -------- |:--------- :| :---------   |
+| participation | parkrunUK | number of parkrun finishes by LSOA and week from 01/01/2010 to 28/12/2019 |
+| events | parkrunUK | location and date each event established |
+| imd | ONS | 2015 Index of Multiple Deprivation  scores by LSOA |
+| centroids | ONS | Population-weighted LSOA centroids and total population|
 
-  2. Parkrun event locations: the location of parkrun courses and the date when they were established.
+We obtained data from parkrunUK on the number of finishers each week from each LSOA in England from 2010-2019. We combined this with data from the parkrun website which provides the location and date of every parkrun event in the country.
 
-  3. The 2015 Index of multiple deprivation for England: this data set provides a score on the relative deprivation level for each of the 32,8444 LSOAs in England. 
-  
-  4. ONS LSOA data: Population-weighted LSOA centroids and total population
+We also obtained IMD scores and deciles for each of the 32,844 LSOAs in England from the ONS, and combined this with the location of the population weighted geographic centroids and total population of the LSOA.
 
+This meant that for each LSOA we have the number of finishes per week, the IMD score & decile, population and the location coordinates of the geographic centroid.
 
-
-
+For each parkrun event we have the location coordinates of the event, and the date in which the first event took place.  
 
 
 ##### Read in the data
@@ -107,7 +111,7 @@ Read in the raw data, clean and prepare
   lsoa_imd = read.csv("./IMD_data.csv")
   head(lsoa_imd) # take a look at the raw data
   
-  # remove columsn we dont nee and rename the one we do need
+  # remove columns we dont need and rename the one we do need
   lsoa_imd = lsoa_imd %>% # read csv
     dplyr::select(c("LSOA.code..2011.","Index.of.Multiple.Deprivation..IMD..Score", # select relevant colums
              "Index.of.Multiple.Deprivation..IMD..Decile..where.1.is.most.deprived.10..of.LSOAs.",
@@ -130,15 +134,18 @@ Read in the raw data, clean and prepare
 
 #### Variables of interest
 
+There are several variables which are used throughout the analysis:
 
-1. **parkrun participatin**: finishers...
+1. **parkrun participation**: participation is measured by the number of finishers in a specified time period. This includes only those individuals who complete an event and scan their bar-code. It may therefore be a (slight) underestimate of total participation.
 
-2. **Distance to the nearest event**: The access of the population living in a given LSOA is measured as the geodesic distance (this is distance as the crow flies) between the LSOA's population-weighted centroid and the nearest active parkrun event.
+2. **Distance to the nearest event**: The access of the population living in a given LSOA is measured as the geodesic distance (this is distance as the crow flies) between the LSOA's population-weighted centroid and the nearest active (in existance) parkrun event.
 
 3. **Index of multiple deprivation (IMD)**: The score combines indices from seven domains (health, education, barriers to horsing and services, crime and living environment), Higher score indicate higher levels of deprivation. For the analysis, we will mainly use IMD deciles: i.e. look at the top and bottom 10% LSOAs.
 
 
-4. **Slope index of inequality**: used for access and participation
+4. **Slope index of inequality**: used for access. The Slope Index of Inequality is commonly used to give an indication of the difference in life expectancy between more and less deprived areas. We apply it here as a measure of inequality of access to parkrun. 
+
+5. **Relative index of inequality**: used for participation. The Relative Index of Inequality is commonly used to provide an indication of the relative inequality between more and less deprived areas. We apply it here as a measure of relative inequality of participation in parkrun.
 
 
 ```{r}
@@ -205,7 +212,7 @@ Read in the raw data, clean and prepare
   monthly_runs_by_lsoa = merge(monthly_runs_by_lsoa,distance.df,by=c("lsoa","month_year"),all.x=T) 
   
   
-# 3. now we cmobine the dat set with information on LSOA IMD deciles
+# 3. now we cmobine the data set with information on LSOA IMD deciles
   lsoa_imd = data.table(lsoa_imd)
   monthly_runs_by_lsoa = merge(monthly_runs_by_lsoa,lsoa_imd,by="lsoa")
   # length(unique(monthly_runs_by_lsoa$lsoa))
@@ -218,6 +225,7 @@ Read in the raw data, clean and prepare
 ## RESULTS
 
 ### Q1: Access to and participation in parkrun events in England over time
+
 
 #### Access over time
 ```{r}
@@ -467,13 +475,31 @@ ggplot(si_runs_ts,aes(x=month_year,y=sii)) +
 
 __Conclusion: Inital decrease in inequality (2010-2013), then stable plateau around 35(!) __
 
-
-
 <br><br>
 
 ****
 
+## DISCUSSION
+
+The proportion of the English population who live within 5 km of a parkrun has increased from X% at the start of 2010 to Y% at the end of 2019.
+
+
+
+<br><br>
+
+
+****
+
 ## CONCLUSION
+
+Previous work showed that in 2018 participation in parkrun was inequitable, while access to parkrun was equitable.
+
+This analysis demonstrates that access and participation have both improved over time, with a seven fold improvement in the percentage of the population within 5 km of a parkrun and the percentage of LSOAs with at least one participant per week. 
+
+However, these changes were not equitable across society. Access became increasingly inequitable, in favour of more deprived areas who had better access to begin with, from 2010 to 2017, after which stage it became slightly more equitable. While participation became more equitable from 2010 to 2013 there has been little change since then, with those in least deprived 50% of communities accounting for around 70% of the finishes.
+
+These findings suggest that access, although a prerequisit, is not a driver of inequalities in participation. A deeper understanding of the reasons why areas with higher levels of deprivation have lower participation in parkrun is essential in order to maximize the public health benefits of parkrun. 
+
 
 ...
 
