@@ -1,7 +1,9 @@
 ---
 title: "Equality in access to and participation in parkrun events in England over time"
-output: html_notebook
-date: 2020-06-05
+output:
+  html_document:
+    df_print: paged
+date: '2020-06-05'
 ---
 
 ```{r include=FALSE}
@@ -17,20 +19,22 @@ options(scipen = 99)
 ****
 
 #### Objectives of this analysis:
- 1. Assess how access to and participation in parkrun events in England evolved over time
+ 1. To better understand how access to and participation in parkrun events in England evolved over time
  2. Study the socioeconomic gradient in access and participation over time
 
 ****
 
+
+## INTRODUCTION
+
+  Our previous analysis published in [Wellcome Open Research](https://wellcomeopenresearch.org/articles/5-9) used data from 2018 to investigate parkrun participation at one point in time. We found that participation in parkrun was much **worse** in areas with high levels of deprivation than areas with low levels of deprivation. This effect was shown to persist, even when controlling for ethnic density. However, in another study we found that that those living in more deprived areas tend to have **better** geographic access to parkrun than those living in less deprived areas [Schneider et al., 2019](https://www.medrxiv.org/content/10.1101/19004143v1).
+  
+  parkrun's Health and Wellbeing team were particularly interested in these studies, since they aim to "promote participation by those who are least active and/or have lower levels of health" [parkrunBlog](https://blog.parkrun.com/uk/2018/04/25/a-healthier-and-happier-planet/), in particular targeting more deprived communities [Sport England](https://blog.parkrun.com/uk/2018/12/12/sportenglandfunding/). They requested that we use historical data to investigate the trends in the efficiency (overall) and equity (between groups) of access and participation.
+  
+  In this study we combine data on community deprivation with information on access to parkrun events and participation therein, and assess the socioeconomic gradient in access and participation using the Relative Index of Inequality. We then study trends in these characteristics for the period from 2010 to 2019. All analyses are conducted on the level of **Lower layer Super Output Areas (LSOAs)**, census areas defined dy the English National Office of Statistics (ONS). There are 32,844 LSOAs in England with a mean opulation of about 1,700 individuals.
+  
+
 ## ANALYSIS
-
-#### Overview
-
-  Our previous analysis published in [Wellcome Open Research](https://wellcomeopenresearch.org/articles/5-9) used data from 2018 to investigate parkrun participation at one point in time. We found that participation in parkrun was much **worse** in areas with high levels of deprivation than areas with low levels of deprivation. This effect was shown to persist, even when controlling for ethnic density. However, in another study we found that that those living in more deprived areas tend to have **better** geographic access to parkrun than those living in less deprived areas [Schneider et al., 2019](https://www.medrxiv.org/content/10.1101/19004143v1). parkrun were particularly interested in these studies, since they aim to "promote participation by those who are least active and/or have lower levels of health" [parkrunBlog](https://blog.parkrun.com/uk/2018/04/25/a-healthier-and-happier-planet/), in particular targetting more deprived communities [Sport England](https://blog.parkrun.com/uk/2018/12/12/sportenglandfunding/). They requested that we use historical data to investigate the trends in the efficiency (overall) and equity (between groups) of access and participation.
-   
-  We combine data on community deprivation with information on access to parkrun events and participation therein, and assess the socioeconomic gradient in access and participation using the Relative Index of Inequality. We then study trends in these characteristics for the period from 2010 to 2019.
-
-  All analyses are conducted on the level of **Lower layer Super Output Areas (LSOAs)**, census areas defined dy the English National Office of Statistics (ONS). There are 32,844 LSOAs in England with a mean opulation of about 1,700 individuals.
 
 #### Preparation
 
@@ -416,7 +420,7 @@ ggplot(runs_by_imd_shares2,aes(x=month_year,y=value,fill=variable)) +
   theme(axis.text.x = element_text(angle=35))
 
 ```
-
+While participation became more equitable from 2010 to 2013 there has been little change since then, with those in least deprived 50% of communities accounting for around 70% of the finishes.
 
 #### The slope index of inequality in participation over time
 
@@ -481,9 +485,19 @@ __Conclusion: Inital decrease in inequality (2010-2013), then stable plateau aro
 
 ## DISCUSSION
 
-The proportion of the English population who live within 5 km of a parkrun has increased from X% at the start of 2010 to Y% at the end of 2019.
+parkrun has been identified domestically and internationally as a physical activity investment that works [Reece, 2019](https://bjsm.bmj.com/content/53/6/326.abstract) [WHO, 2019](https://books.google.co.uk/books?hl=en&lr=&id=RnOyDwAAQBAJ&oi=fnd&pg=PA48&dq=world+health+organisation+physical+activity+&ots=GOjuVfICZn&sig=ql4pcYmmOOD2ToGNFPF4GuqkG8c#v=onepage&q=world%20health%20organisation%20physical%20activity&f=false). Despite this there is very limited research on how parkrun has evolved over time.
 
+Access to parkrun has improved over time, the proportion of the English population living within 5 km of a parkrun has increased from around 10% in 2010 to 7X% in 2019. Access was originally almost exactly equitable, but from Autumn 2010 became disproportionately better in more deprived areas. This inequality peaked (at an RII of around 3-3.5 in Autumn 2017) before declining (to around 1.3 in 2019). In short, geographical access is generally better for those living in more deprived communities, and this has been the case since at latest 2010. This is largely driven by the large number of events that exist in cities, which are more deprived than urban areas.
 
+Participation in parkrun has also improved over time, from less than 10,000 monthly finishes in 2010 to almost 500,000 monthly finishes in 2019. However this growth differs by deprivation. Parkrun was initially extremely inequitable, with over 200 times more finishes from the least deprived communities compared to the most deprived communities. The slope of this gradient reduced from 2010 to 2013, but has since stabilised such that the least deprived decile of LSOAs have 35 times the number of finishes than the more deprived decile of LSOAs.
+
+These findings are both encouraging and discouraging. The overall growth in access and deprivation has increased monotonically over time. However, despite the fact that geographical access to parkrun events has continued to be better for those in more deprived communities, participation has remained substantially lower in these areas. This suggests that improved access, while likely to increase overall participation, is unlikely to reduce inequalities in participation and is likely to be relatively ineffective in engaging deprived communities. Further research is necessary to better understand other (non-geographical) barriers to participation in order to develop effective strategies to increase engagement. 
+
+## LIMITATIONS
+
+The measure of access used in this study, linear (geodesc) distance, does not incorporate the ability of different groups to attend events. A 5 km distance may be more difficult to transverse in a city than for those with a car in rural areas. However, given most people attending parkrun are relatively healthy (REF) we expect that active travel may negate some of these differences. A model which uses estimates of travel time using travel distance and predicted transport mode may yield a better proxy for access.
+
+The Relative Index of Inequality (RII) is a relatively commonly used measure of inequity used where the independant variable varies linearly @sergeant2006relative. In most years the relationship was relatively linear, but (CHECK THIS). 
 
 <br><br>
 
@@ -492,15 +506,45 @@ The proportion of the English population who live within 5 km of a parkrun has i
 
 ## CONCLUSION
 
-Previous work showed that in 2018 participation in parkrun was inequitable, while access to parkrun was equitable.
+Previous work showed that in 2018 participation in parkrun had a steep socioeconomic gradient (lower participation for more socioeconomically deprived areas), despite the fact that access to parkrun has a negative socioeconomic gradient (better access for more socioeconomically deprived areas).
 
-This analysis demonstrates that access and participation have both improved over time, with a seven fold improvement in the percentage of the population within 5 km of a parkrun and the percentage of LSOAs with at least one participant per week. 
+This analysis demonstrates that both access and participation have improved over time. However, while access became disproportionately better in more deprived areas from 2010 to 2017, reductions in inequity of participation ceased in 2013.
 
-However, these changes were not equitable across society. Access became increasingly inequitable, in favour of more deprived areas who had better access to begin with, from 2010 to 2017, after which stage it became slightly more equitable. While participation became more equitable from 2010 to 2013 there has been little change since then, with those in least deprived 50% of communities accounting for around 70% of the finishes.
+However, these changes were not equitable across society. Access became increasingly inequitable, in favour of more deprived areas who had better access to begin with, from 2010 to 2017, after which stage it became slightly more equitable. 
 
 These findings suggest that access, although a prerequisit, is not a driver of inequalities in participation. A deeper understanding of the reasons why areas with higher levels of deprivation have lower participation in parkrun is essential in order to maximize the public health benefits of parkrun. 
 
 
 ...
+
+
+<!-- @article{reece2019bright, -->
+<!--   title={Bright Spots, physical activity investments that work: Parkrun; a global initiative striving for healthier and happier communities}, -->
+<!--   author={Reece, Lindsey J and Quirk, Helen and Wellington, Chrissie and Haake, Steve J and Wilson, Fiona}, -->
+<!--   journal={Br J Sports Med}, -->
+<!--   volume={53}, -->
+<!--   number={6}, -->
+<!--   pages={326--327}, -->
+<!--   year={2019}, -->
+<!--   publisher={BMJ Publishing Group Ltd and British Association of Sport and Exercise Medicine} -->
+<!-- } -->
+
+<!-- @book{world2019global, -->
+<!--   title={Global action plan on physical activity 2018-2030: more active people for a healthier world}, -->
+<!--   author={World Health Organization}, -->
+<!--   year={2019}, -->
+<!--   publisher={World Health Organization} -->
+<!-- } -->
+
+<!-- @article{sergeant2006relative, -->
+<!--   title={Relative index of inequality: definition, estimation, and inference}, -->
+<!--   author={Sergeant, Jamie C and Firth, David}, -->
+<!--   journal={Biostatistics}, -->
+<!--   volume={7}, -->
+<!--   number={2}, -->
+<!--   pages={213--224}, -->
+<!--   year={2006}, -->
+<!--   publisher={Oxford University Press} -->
+<!-- } -->
 
 
