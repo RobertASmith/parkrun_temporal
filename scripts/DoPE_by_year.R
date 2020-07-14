@@ -32,17 +32,17 @@ event_locations = read.csv("rawdata/event_info_20181212.csv") # read in data
 event_locations$month_year = substr(event_locations$Estblsh,1,7) # get month and year
 event_locations$Estblsh = as.Date(event_locations$Estblsh) # convert date
 
-# 2. 2015 IMD data  
+# 2. 2015 IMD data: imd, total population and percent non working age.  
 
 lsoa_imd = fread("rawdata/IMD_data.csv")[
     ,.(lsoa = `LSOA code (2011)`,
      imd_score = `Index of Multiple Deprivation (IMD) Score`,
      imd_decile = `Index of Multiple Deprivation (IMD) Decile (where 1 is most deprived 10% of LSOAs)`,
-     total_pop = `Total population: mid 2012 (excluding prisoners)`)
+     total_pop = `Total population: mid 2012 (excluding prisoners)`,
+     perc_non_working_age = 1 - (`Working age population 18-59/64: for use with Employment Deprivation Domain (excluding prisoners)`/`Total population: mid 2012 (excluding prisoners)`))
      ] # only retain the columns we need
 
 lsoa_imd = lsoa_imd[substr(lsoa,start = 1,stop = 1) == "E",]   # restrict to england. 
-
 
 
 # 3. LSOA pop-weighted centroid locations
@@ -63,7 +63,7 @@ lsoa_ethnicity = lsoa_ethnicity[,
 lsoa_ethnicity = lsoa_ethnicity[!(grepl("W",lsoa_ethnicity$lsoa)),]   
 
 
-# 5. Parkrun participation data
+# 5. parkrun participation data
 fill_dat = expand.grid(year = 2011:2019,
                        lsoa = unique(lsoa_imd$lsoa)) %>% data.table # using all English LSOAs from the imd data set
 
@@ -80,13 +80,19 @@ runs_df = merge(x = fill_dat,
 
 runs_df$finishers[is.na(runs_df$finishers)] = 0  # filling missings
 
-# 6. Access - want to calculate for each lsoa and year what the distance to nearest event was on 1st January!!
+# 6. Density
+lsoa_density = fread("rawdata/Mid-2017 Population Density.csv",
+                     stringsAsFactors = F)
+lsoa_density = lsoa_density[grep(pattern = "E",`Code`),.(lsoa = `Code`,
+                                              pop_density = `People per Sq Km`)]
+
+# 8. Access - want to calculate for each lsoa and year what the distance to nearest event was on 1st January!!
 
 
 
-# merge all the datasets.
-lsoa_df = Reduce(function(x, y) merge(x, y,by="lsoa", all=TRUE), 
-                 list(runs_df, lsoa_imd, lsoa_ethnicity))
+# merge all the data-sets.
+lsoa_df = Reduce(function(x, y) merge(x, y, by="lsoa", all=TRUE), 
+                 list(runs_df, lsoa_imd, lsoa_ethnicity, lsoa_density ))
 
 
 #=============#
