@@ -38,7 +38,7 @@ source.all(path = "R")
 
 # 1. parkrun event locations
 
-event_locations = read.csv("rawdata/event_info_20181212.csv") # read in data
+event_locations = read.csv("rawdata/event_info_20181231.csv") # read in data
 event_locations$month_year = substr(event_locations$Estblsh,1,7) # get month and year
 event_locations$Estblsh = as.Date(event_locations$Estblsh) # convert date
 
@@ -56,6 +56,9 @@ lsoa_imd = lsoa_imd[substr(lsoa,start = 1,stop = 1) == "E",]   # restrict to Eng
 
 # weird - there exist 10 locations in which the population working age exceeds total, in this case make 0% non working age
 lsoa_imd$perc_non_working_age[lsoa_imd$perc_non_working_age<0] = 0
+
+# proportion to percent
+lsoa_imd$perc_non_working_age = lsoa_imd$perc_non_working_age*100
 
 # 3. LSOA pop-weighted centroid locations
 
@@ -75,16 +78,18 @@ lsoa_ethnicity = lsoa_ethnicity[,
                                                    `Sex: All persons; Age: All categories: Age; Ethnic Group: All categories: Ethnic group; measures: Value`)
                                 )]
 lsoa_ethnicity = lsoa_ethnicity[!(grepl("W",lsoa_ethnicity$lsoa)),]   
+# proportion to percent
+lsoa_ethnicity$perc_bme = lsoa_ethnicity$perc_bme*100
 
 
 # 5. parkrun participation data
 
-runs_df = readRDS("rawdata/runs_per_lsoa_2010to2020.Rds") %>% as.data.table # read in parkrun participation data; participation is measured in n of idividuals who finish a parkrun event
+runs_df = readRDS("rawdata/runs_per_lsoa_2010to2020.Rds")
 runs_df = runs_df[grep(pattern = "E",lsoa)] # select LSOAs in England only
 runs_df$month_year = substr(runs_df$date,1,7) # create a month & year variable
 runs_df$date = as.Date(unclass(runs_df$date),format="%Y-%m-%d") # convert to Date class
 runs_df = runs_df[weekdays(runs_df$date) == "Saturday"] # restrict to saturday events only
-runs_df = runs_df[runs_df$date <= as.Date("2018-12-12"),] # restrict to events before 2019
+runs_df = runs_df[runs_df$date <= as.Date("2018-12-31"),] # restrict to events before 2019
 runs_df = runs_df[,.(finishers = sum(finishers)),by = c("month_year","lsoa")]
 
 # merge template fill_dat with runs data.
@@ -104,33 +109,41 @@ lsoa_density = lsoa_density[grep(pattern = "E",`Code`),
                             .(lsoa = `Code`,
                               pop_density = `People per Sq Km`)]
 lsoa_density$pop_density = as.numeric(gsub(",", "", lsoa_density$pop_density))
+# convert ppl / km^2 to 1,000* ppl / km^2 
+lsoa_density$pop_density = lsoa_density$pop_density / 1000
 
-# 8. Access - want to calculate for each lsoa and year what the distance to nearest event was on 1st January!!
+
+# 8. Access - want to calculate for each lsoa and month-year what the distance to nearest event was on 15th!!
 distM = geosphere::distm(x= lsoa_locations,
                          y=cbind(event_locations$lng,
                                  event_locations$lat))
-
+# convert meters to km
+distM = distM / 1000 
 dimnames(distM) <- list(rownames(lsoa_centr),event_locations$course) # set row and column names
 
 ## loop to assess access in any given month  (month_years)
-# (may take a while to run) - R.S. this is slow because of rowbind, but not worth taking time to speed up (should really create matrix prior)
-distance.df = c()
+# (may take a while to run) - pre-specified matrix size, a bit faster now
 months_t = as.Date(paste(unique(runs_full$month_year),
                          "-15",
                          sep="")) # middle of the month
 
+distance.df = matrix(ncol = 3, nrow = length(months_t) * length(lsoa_locations$name),
+                     data = NA)
+colnames(distance.df) = c("lsoa","month_year","access")
+index = 0
 for(t in months_t){
   # create a date
   t = as.Date(t, origin = as.Date("1970-01-01"))
-  
-  # cat("\r  at:",as.character(t))
+  cat("\r  at:",as.character(t))
   events_in_operation = event_locations$Estblsh <= t # which parkrun events were active in month t?
-  
   temp.dist = get_min_dist(available_event_cols = events_in_operation,
                            month_year = substr(t,1,7),
                            distance_matrix = distM)
   
-  distance.df = rbind(distance.df,temp.dist)
+  index_rows = 1:length(lsoa_locations$name) + ( index * length(lsoa_locations$name) ) 
+  distance.df[index_rows,] = as.matrix(temp.dist)
+  
+  index = index + 1
 }
 
 
@@ -145,18 +158,19 @@ lsoa_df_monthly = Reduce(function(x, y) merge(x, y, by="lsoa", all=TRUE),
 
 # merge distance to nearest event
 lsoa_df_monthly = merge(lsoa_df_monthly,distance.df,by=c("lsoa","month_year"))
-
+lsoa_df_monthly$access = as.numeric(lsoa_df_monthly$access)
 
 #=========#
 # SAVE DATASETS
 #=========#
 
 # save files to cleandata
-saveRDS(object = lsoa_df_monthly,file = "cleandata/lsoa_df_monthly")
-write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather")
+saveRDS(object = lsoa_df_monthly,file = "cleandata/lsoa_df_monthly.Rds")
+# PS: the .feather is 309 mb?!
+# write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather.feather")
 
 # checking data-set
-temp <- readRDS("cleandata/lsoa_df_monthly")
+# temp <- readRDS("cleandata/lsoa_df_monthly.Rds")
 
-summary(temp)
+# summary(temp)
 
