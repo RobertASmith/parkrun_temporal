@@ -16,8 +16,12 @@ rm(list = ls())
 # load all necessary packages
 pacman::p_load(dplyr,reshape2,data.table,date,
                raster,geosphere,ggplot2,scales,
+<<<<<<< HEAD
                RColorBrewer,miceadds,lubridate,
                feather)
+=======
+               RColorBrewer,miceadds,lubridate)
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 
 # source all functions in R folder
 source.all(path = "R")
@@ -26,6 +30,7 @@ source.all(path = "R")
 #   DATA
 #============#
 
+<<<<<<< HEAD
 # data is loaded from multiple sources
 # 1. event locations from our web scraped data
 # 2. IMD data from the ONS
@@ -35,6 +40,8 @@ source.all(path = "R")
 # 6. Population density from ONS
 # 7. Access - calculated here based on LSOA centoids & event locations data.
 
+=======
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 
 # 1. parkrun event locations
 
@@ -52,7 +59,11 @@ lsoa_imd = fread("rawdata/IMD_data.csv")[
      perc_non_working_age = 1 - (`Working age population 18-59/64: for use with Employment Deprivation Domain (excluding prisoners)`/`Total population: mid 2012 (excluding prisoners)`))
      ] # only retain the columns we need
 
+<<<<<<< HEAD
 lsoa_imd = lsoa_imd[substr(lsoa,start = 1,stop = 1) == "E",]   # restrict to England. 
+=======
+lsoa_imd = lsoa_imd[substr(lsoa,start = 1,stop = 1) == "E",]   # restrict to england. 
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 
 
 # 3. LSOA pop-weighted centroid locations
@@ -63,10 +74,15 @@ lsoa_locations = spTransform(lsoa_locations,
 lsoa_centr = coordinates(lsoa_locations) # extract coordinates
 rownames(lsoa_centr) = lsoa_locations$code
 
+<<<<<<< HEAD
 # 4. Ethnicity data-sets
 
 lsoa_ethnicity = fread(input = "rawdata/Ethnicity_data/LSOA_Ethnicity.csv",
                        stringsAsFactors = F)
+=======
+# 4. Ethnicity datasets
+lsoa_ethnicity = fread(input = "rawdata/Ethnicity_data/LSOA_Ethnicity.csv",stringsAsFactors = F)
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 lsoa_ethnicity = lsoa_ethnicity[,
                   .(lsoa = `geography code`,
                     perc_bme = 1- (`Sex: All persons; Age: All categories: Age; Ethnic Group: White: Total; measures: Value`/
@@ -76,6 +92,7 @@ lsoa_ethnicity = lsoa_ethnicity[!(grepl("W",lsoa_ethnicity$lsoa)),]
 
 
 # 5. parkrun participation data
+<<<<<<< HEAD
 
 runs_df = readRDS("rawdata/runs_per_lsoa_2010to2020.Rds") %>% as.data.table # read in parkrun participation data; participation is measured in n of idividuals who finish a parkrun event
 runs_df = runs_df[grep(pattern = "E",lsoa)] # select LSOAs in England only
@@ -94,10 +111,28 @@ runs_full = merge(x = fill_dat,
                 all.x=T)
 
 runs_full$finishers[is.na(runs_full$finishers)] = 0  # filling missing data
+=======
+fill_dat = expand.grid(year = 2011:2019,
+                       lsoa = unique(lsoa_imd$lsoa)) %>% data.table # using all English LSOAs from the imd data set
+
+runs_df = readRDS("rawdata/runs_per_lsoa_2010to2020.Rds") %>% as.data.table # read in parkrun participation data; participation is measured in n of idividuals who finish a parkrun event
+runs_df = runs_df[grep(pattern = "E",lsoa)] # select LSOAs in England only
+runs_df$year = substr(x = runs_df$date ,start = 1,stop = 4) %>% as.numeric
+runs_df = runs_df[,.(finishers = sum(finishers)),by = c("year","lsoa")]
+
+# merge template fill_dat with runs data.
+runs_df = merge(x = fill_dat,
+                y = runs_df, 
+                by=c("year","lsoa"), 
+                all.x=T)
+
+runs_df$finishers[is.na(runs_df$finishers)] = 0  # filling missings
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 
 # 6. Density
 lsoa_density = fread("rawdata/Mid-2017 Population Density.csv",
                      stringsAsFactors = F)
+<<<<<<< HEAD
 lsoa_density = lsoa_density[grep(pattern = "E",`Code`),
                             .(lsoa = `Code`,
                               pop_density = `People per Sq Km`)]
@@ -113,6 +148,60 @@ dimnames(distM) <- list(rownames(lsoa_centr),event_locations$course) # set row a
 # (may take a while to run) - R.S. this is slow because of rowbind, but not worth taking time to speed up (should really create matrix prior)
 distance.df = c()
 months_t = as.Date(paste(unique(runs_full$month_year),
+=======
+lsoa_density = lsoa_density[grep(pattern = "E",`Code`),.(lsoa = `Code`,
+                                              pop_density = `People per Sq Km`)]
+
+# 8. Access - want to calculate for each lsoa and year what the distance to nearest event was on 1st January!!
+
+
+
+# merge all the data-sets.
+lsoa_df = Reduce(function(x, y) merge(x, y, by="lsoa", all=TRUE), 
+                 list(runs_df, lsoa_imd, lsoa_ethnicity, lsoa_density ))
+
+
+#=============#
+# CLEAN & TIDY
+#=============#
+
+
+# 1. parkrun participation
+
+# aggregate by lsoa and year (fast version using data.table)
+monthly_runs = runs_df[, lapply(.SD, sum), by = month_year, .SDcols = "finishers"]
+monthly_runs_by_lsoa = runs_df[, lapply(.SD, sum), by = c("month_year","lsoa"), .SDcols = "finishers"]
+
+# Before we proceed with the analysis of socio economic disparities, 
+# we need to account for the missing data 
+# LSOAs with no runs are not in the data 
+# (some lsoas might even be missing completely, if they never had a participant)
+# so we have to fill them in manually:
+fill_dat = expand.grid(month_year = unique(monthly_runs_by_lsoa$month_year),
+                       lsoa = lsoa_imd$lsoa) %>% data.table # using all English LSOAs from the imd data set
+
+monthly_runs_by_lsoa = merge(fill_dat, 
+                             monthly_runs_by_lsoa, 
+                             by=c("month_year","lsoa"), 
+                             all.x=T)
+
+monthly_runs_by_lsoa$finishers[is.na(monthly_runs_by_lsoa$finishers)] = 0  # filling missings
+
+# proportion of LSOAs that had 0 runs in any given months
+# monthly_runs_by_lsoa[, lapply(.SD, function(x){round(sum(x==0)/length(x),4)*100}), by = c("month_year"), .SDcols = "finishers"]
+
+
+# 2. Access (= distance to the nearst parkrun event)
+# compute the distances between all 32,844 lsoas and all 465 parkrun events 
+# CAVE: computationally heavy computation!
+distM = geosphere::distm(x= lsoa_locations,y=cbind(event_locations$lng,event_locations$lat))
+dimnames(distM) <- list(rownames(lsoa_centr),event_locations$course) # set row and column names
+
+## loop to assess access in any given month  (month_years)
+# (may take a while to run) - R.S. this is slow because of rbind, but not worth taking time to speed up (should really create matrix prior)
+distance.df = c()
+months_t = as.Date(paste(unique(monthly_runs_by_lsoa$month_year),
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
                          "-15",
                          sep="")) # middle of the month
 
@@ -130,6 +219,7 @@ for(t in months_t){
   distance.df = rbind(distance.df,temp.dist)
 }
 
+<<<<<<< HEAD
 
 #=========#
 # MERGE DATA
@@ -156,4 +246,34 @@ write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather")
 temp <- readRDS("cleandata/lsoa_df_monthly")
 
 temp[temp$lsoa=="E01019077"]
+=======
+head(distance.df)
+dim(distance.df)
+
+# merge
+distance.df = data.table(distance.df)
+monthly_runs_by_lsoa = merge(monthly_runs_by_lsoa,distance.df,by=c("lsoa","month_year"),all.x=T) 
+
+
+# 3. now we cmobine the data set with information on LSOA IMD deciles
+lsoa_imd = data.table(lsoa_imd)
+monthly_runs_by_lsoa = merge(monthly_runs_by_lsoa,lsoa_imd,by="lsoa")
+# length(unique(monthly_runs_by_lsoa$lsoa))
+
+# 4. the SII will be computed later on - see below
+
+
+
+# Rob's analysis
+
+
+
+
+
+
+
+
+
+
+>>>>>>> a16d8174c0acb4afc37e759b83b4bc7d4eb0f28b
 
