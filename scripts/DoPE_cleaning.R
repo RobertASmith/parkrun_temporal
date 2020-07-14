@@ -103,6 +103,7 @@ lsoa_density = fread("rawdata/Mid-2017 Population Density.csv",
 lsoa_density = lsoa_density[grep(pattern = "E",`Code`),
                             .(lsoa = `Code`,
                               pop_density = `People per Sq Km`)]
+lsoa_density$pop_density = as.numeric(gsub(",", "", lsoa_density$pop_density))
 
 # 8. Access - want to calculate for each lsoa and year what the distance to nearest event was on 1st January!!
 distM = geosphere::distm(x= lsoa_locations,
