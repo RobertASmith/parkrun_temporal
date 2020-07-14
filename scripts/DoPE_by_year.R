@@ -54,6 +54,8 @@ lsoa_imd = fread("rawdata/IMD_data.csv")[
 
 lsoa_imd = lsoa_imd[substr(lsoa,start = 1,stop = 1) == "E",]   # restrict to England. 
 
+# weird - there exist 10 locations in which the population working age exceeds total, in this case make 0% non working age
+lsoa_imd$perc_non_working_age[lsoa_imd$perc_non_working_age<0] = 0
 
 # 3. LSOA pop-weighted centroid locations
 
@@ -155,5 +157,5 @@ write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather")
 # checking data-set
 temp <- readRDS("cleandata/lsoa_df_monthly")
 
-temp[temp$lsoa=="E01019077"]
+summary(temp)
 
