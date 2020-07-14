@@ -17,7 +17,7 @@ rm(list = ls())
 pacman::p_load(dplyr,reshape2,data.table,date,
                raster,geosphere,ggplot2,scales,
                RColorBrewer,miceadds,lubridate,
-               feather,stargazer, kableExtra)
+               feather,stargazer, kableExtra,jtools)
 
 # source all functions in R folder
 source.all(path = "R")
@@ -43,7 +43,7 @@ dt_parkrun = dt_parkrun[,.(finishers = sum(finishers),
               ),
            by = c("year","lsoa")]
 
-
+summ(results[[1]], exp = TRUE)
 
 
 #=====#
@@ -95,7 +95,10 @@ stargazer(models[[1]],
                                "Pop Density",
                                "Distance(km)",
                                "Non-working-age"),
-          type = "text")
+          type = "html",
+          apply.coef = exp,
+          apply.se   = exp,
+          out = "outputs/results.html")
 
 
 
