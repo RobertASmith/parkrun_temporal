@@ -16,7 +16,7 @@ rm(list = ls())
 # load all necessary packages
 pacman::p_load(dplyr,reshape2,data.table,date,
                raster,geosphere,ggplot2,scales,
-               RColorBrewer,lubridate,feather,
+               RColorBrewer,lubridate,feather,miceadds,
                stargazer, kableExtra, jtools)
 
 # source all functions in R folder
@@ -39,19 +39,21 @@ levels(dt_parkrun$imd_q5) =  c("Least deprived 20%","Less deprived 20%", "Median
 imd_colors = c("orangered","orange","yellow3","yellowgreen","lawngreen")
 imd_colors = imd_colors[length(imd_colors):1]
 
-
-
 #=====#
 # Figure 1: nearest distances by imd by month year
 #=====#
 fig1_df = agg_parkrun_stat(dt_parkrun,y="access")
-ggplot(fig1_df,aes(x=plot_date,y=access,col=imd_q5)) +
+plot1 = ggplot(fig1_df,aes(x=plot_date,y=access,col=imd_q5)) +
   geom_point(size=0.2)+
   geom_line() +
   scale_color_manual(values=c(imd_colors,1),name="IMD quintile") +
   ylab("Mean distance to the nearest parkrun event (km)") +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y",name="") +
   theme_minimal()
+
+# store in outputs
+ggsave(plot = plot1,width = 10,
+       filename = "outputs/Figure1_access.png")
 
 #=====#
 # Table 1: nearest distances by imd by year
@@ -61,15 +63,20 @@ tbl1_general = aggregate(access ~ year, dt_parkrun, make_parkrun_tbl)
 tbl1_general$imd_q5 = "Overall"
 tbl1 = rbind(tbl1_general,tbl1_df)
 tbl1 = reshape2::dcast(tbl1, imd_q5~year,value.var = "access")
-tbl1[c(6:1),]
+table1 = tbl1[c(6:1),]
 
+# store in outputs
+stargazer(summary = FALSE,
+          x = table1,
+          format = "html",
+          out = "outputs/Table1_access.html")
 
 #=====#
 # Figure 2: parkrun participation by imd by month year
 #=====#
 
 fig2_df = agg_parkrun_stat(dt_parkrun,y="finishers")
-ggplot(fig2_df,aes(x=plot_date,y=finishers,col=imd_q5)) +
+plot2 <- ggplot(fig2_df,aes(x=plot_date,y=finishers,col=imd_q5)) +
   # geom_point(size=0.2)+
   geom_line(alpha=0.7,size=0.3) +
   geom_smooth(alpha=1,se=F) +
@@ -77,6 +84,11 @@ ggplot(fig2_df,aes(x=plot_date,y=finishers,col=imd_q5)) +
   # ylab("Mean distance to the nearest parkrun event") +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y",name="") +
   theme_minimal()
+
+# store in outputs
+ggsave(plot = plot2,width = 10,
+       filename = "outputs/Figure2_participation.png")
+
 
 
 #=====#
@@ -88,8 +100,14 @@ tbl2_general = aggregate(finishers ~ year, dt_parkrun, make_parkrun_tbl)
 tbl2_general$imd_q5 = "Overall"
 tbl2 = rbind(tbl2_general,tbl2_df)
 tbl2 = reshape2::dcast(tbl2, imd_q5~year,value.var = "finishers")
-tbl2[c(6:1),]
+table2 = tbl2[c(6:1),]
 
+
+# store in outputs
+stargazer(summary = FALSE,
+          x = table2,
+          format = "html",
+          out = "outputs/Table2_participation.html")
 
 
 # IMD RANGE
@@ -119,7 +137,7 @@ fig3$rii = apply(X = fig3,
 
 fig3$month_year = as.Date(paste(fig3$month_year,"01",sep="-"))
 
-ggplot(fig3,aes(x=month_year,y=rii)) +
+plot3 = ggplot(fig3,aes(x=month_year,y=rii)) +
   geom_point() +
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
@@ -127,6 +145,13 @@ ggplot(fig3,aes(x=month_year,y=rii)) +
   xlab("Year")+
   theme_minimal() +
   theme(axis.text.x = element_text(angle=35))
+
+# store in outputs
+ggsave(plot = plot3,width = 10,
+       filename = "outputs/Figure3_rii_access.png")
+
+
+
 
 #=====#
 # numerical results: Ratio Index of Inequality: Access
@@ -149,7 +174,14 @@ tab3$rii = apply(X = tab3,
                        
                        })
 
+# store in outputs
+stargazer(summary = FALSE,
+          x = tab3,
+          format = "html",
+          out = "outputs/Table3_rii_access.html")
+
 tab3
+
 
 
 #=====#
@@ -169,7 +201,7 @@ fig4$rii = apply(X = fig4,
                    
                    pred.temp = predict(object = glm.temp,
                                        newdata = data.frame(imd_score = IMD_RANGE,
-                                                            total_pop = mean( log(temp.df$total_pop))),
+                                                            total_pop = mean( log(subset(dt_parkrun,month_year == m)$total_pop))),
                                        type="response")
                    
                    tb_ratio.temp = pred.temp[1] / pred.temp[2]
@@ -179,9 +211,9 @@ fig4$rii = apply(X = fig4,
                    })
 
 
-fig4$month_year = as.Date(paste(ri_finishers$month_year,"01",sep="-"))
+fig4$month_year = as.Date(paste(fig4$month_year,"01",sep="-"))
 
-ggplot(data = fig4,
+plot4 <- ggplot(data = fig4,
        aes(x=month_year,y=rii)) +
   geom_point() +
   geom_line() +
@@ -190,8 +222,14 @@ ggplot(data = fig4,
   theme_minimal() +
   theme(axis.text.x = element_text(angle=35))
 
+# store in outputs
+ggsave(plot = plot4,width = 10,
+       filename = "outputs/Figure4_rii_participation.png")
+
+
+# looking into the month effect:
 monthly_rii_trend = aggregate(rii ~ month(fig4$month_year),
-                              ri_finishers,median)
+                              fig4,median)
 
 names(monthly_rii_trend) = c("month","median_rii")
 
@@ -223,6 +261,12 @@ for(y in uniq.years){
 }
 
 ri_finishers.y
+
+# store in outputs
+stargazer(summary = FALSE,
+          x = ri_finishers.y,
+          format = "html",
+          out = "outputs/Table_RII_part.html")
 
 
 
