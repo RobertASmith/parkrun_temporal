@@ -16,8 +16,8 @@ rm(list = ls())
 # load all necessary packages
 pacman::p_load(dplyr,reshape2,data.table,date,
                raster,geosphere,ggplot2,scales,
-               RColorBrewer,miceadds,lubridate,
-               feather,stargazer, kableExtra,jtools)
+               RColorBrewer,lubridate,feather,
+               stargazer, kableExtra, jtools)
 
 # source all functions in R folder
 source.all(path = "R")
@@ -49,7 +49,7 @@ ggplot(fig1_df,aes(x=plot_date,y=access,col=imd_q5)) +
   geom_point(size=0.2)+
   geom_line() +
   scale_color_manual(values=c(imd_colors,1),name="IMD quintile") +
-  ylab("Mean distance to the nearest parkrun event") +
+  ylab("Mean distance to the nearest parkrun event (km)") +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y",name="") +
   theme_minimal()
 
@@ -61,7 +61,7 @@ tbl1_general = aggregate(access ~ year, dt_parkrun, make_parkrun_tbl)
 tbl1_general$imd_q5 = "Overall"
 tbl1 = rbind(tbl1_general,tbl1_df)
 tbl1 = reshape2::dcast(tbl1, imd_q5~year,value.var = "access")
-tbl1[c(6,1:5),]
+tbl1[c(6:1),]
 
 
 #=====#
@@ -88,7 +88,7 @@ tbl2_general = aggregate(finishers ~ year, dt_parkrun, make_parkrun_tbl)
 tbl2_general$imd_q5 = "Overall"
 tbl2 = rbind(tbl2_general,tbl2_df)
 tbl2 = reshape2::dcast(tbl2, imd_q5~year,value.var = "finishers")
-tbl2[c(6,1:5),]
+tbl2[c(6:1),]
 
 
 
@@ -99,24 +99,32 @@ IMD_RANGE = range(dt_parkrun$imd_score)
 #=====#
 # Figure 3: Ratio Index of Inequality: Access
 #=====#
-uniq.month_years = unique(dt_parkrun$month_year)
-ri_access = c()
-for(m in uniq.month_years){
-  # cat("\r",m)
-  temp.df = dt_parkrun[dt_parkrun$month_year==m, ]
-  lm.temp = lm(access ~ imd_score,temp.df)
-  pred.temp = predict(lm.temp,newdata = data.frame(imd_score = IMD_RANGE))
-  tb_ratio.temp = pred.temp[1] / pred.temp[2]
-  res.df = data.frame(month_year=m,rii = tb_ratio.temp)
-  ri_access = rbind(ri_access,res.df)
-}
+fig3 = data.frame(month_year = unique(dt_parkrun$month_year))
 
-ri_access$month_year = as.Date(paste(ri_access$month_year,"01",sep="-"))
-ggplot(ri_access,aes(x=month_year,y=rii)) +
+fig3$rii = apply(X = fig3,
+      MARGIN = 1,
+       FUN = function(m){
+
+         lm.temp = lm(data = subset(dt_parkrun,month_year == m),
+                      formula = access ~ imd_score)
+        
+         pred.temp = predict(lm.temp,
+                             newdata = data.frame(imd_score = IMD_RANGE))
+         
+         tb_ratio.temp = pred.temp[1] / pred.temp[2]
+         
+       return(tb_ratio.temp)
+         
+         })
+
+fig3$month_year = as.Date(paste(fig3$month_year,"01",sep="-"))
+
+ggplot(fig3,aes(x=month_year,y=rii)) +
   geom_point() +
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
   ylab("RII - Distance to the nearest parkrun event") +
+  xlab("Year")+
   theme_minimal() +
   theme(axis.text.x = element_text(angle=35))
 
@@ -124,43 +132,57 @@ ggplot(ri_access,aes(x=month_year,y=rii)) +
 # numerical results: Ratio Index of Inequality: Access
 #=====#
 
-uniq.years = unique(dt_parkrun$year)
-ri_access.y = c()
-for(y in uniq.years){
-  # cat("\r",m)
-  temp.df = dt_parkrun[dt_parkrun$year==y, ]
-  lm.temp = lm(access ~ imd_score,temp.df)
-  pred.temp = predict(lm.temp,newdata = data.frame(imd_score = IMD_RANGE))
-  tb_ratio.temp = pred.temp[1] / pred.temp[2]
-  res.df = data.frame(year=y,rii = tb_ratio.temp)
-  ri_access.y = rbind(ri_access.y,res.df)
-}
+tab3 = data.frame(year = unique(dt_parkrun$year))
 
-ri_access.y
+tab3$rii = apply(X = tab3,
+                 MARGIN = 1,
+                 FUN = function(y) {
 
+                       lm.temp = lm(access ~ imd_score, data = subset(dt_parkrun, year == y))
+                       
+                       pred.temp = predict(lm.temp,
+                                           newdata = data.frame(imd_score = IMD_RANGE))
+                       
+                       tb_ratio.temp = pred.temp[1] / pred.temp[2]
+                       
+                       return(tb_ratio.temp)
+                       
+                       })
 
-
-
+tab3
 
 
 #=====#
 # Figure 4: Ratio Index of Inequality: Participation
 #=====#
-uniq.month_years = unique(dt_parkrun$month_year)
-ri_finishers = c()
-for(m in uniq.month_years){
-  # cat("\r",m)
-  temp.df = dt_parkrun[dt_parkrun$month_year==m, ]
-  glm.temp = glm(finishers ~imd_score,temp.df,offset = log(total_pop),family = poisson(link="log"))
-  pred.temp = predict(glm.temp,newdata = data.frame(imd_score = IMD_RANGE,
-                                                    total_pop = mean( log(df$total_pop))),type="response")
-  tb_ratio.temp = pred.temp[1] / pred.temp[2]
-  res.df = data.frame(month_year=m,rii = tb_ratio.temp)
-  ri_finishers = rbind(ri_finishers,res.df)
-}
 
-ri_finishers$month_year = as.Date(paste(ri_finishers$month_year,"01",sep="-"))
-ggplot(ri_finishers,aes(x=month_year,y=rii)) +
+fig4 = data.frame(month_year = unique(dt_parkrun$month_year))
+
+fig4$rii = apply(X = fig4,
+                 MARGIN = 1,
+                 FUN = function(m){
+                   
+                   glm.temp = glm(data = subset(dt_parkrun,month_year == m),
+                                  formula = finishers ~imd_score,
+                                  offset = log(total_pop),
+                                  family = poisson(link="log"))
+                   
+                   pred.temp = predict(object = glm.temp,
+                                       newdata = data.frame(imd_score = IMD_RANGE,
+                                                            total_pop = mean( log(temp.df$total_pop))),
+                                       type="response")
+                   
+                   tb_ratio.temp = pred.temp[1] / pred.temp[2]
+                   
+                   return(tb_ratio.temp)
+                   
+                   })
+
+
+fig4$month_year = as.Date(paste(ri_finishers$month_year,"01",sep="-"))
+
+ggplot(data = fig4,
+       aes(x=month_year,y=rii)) +
   geom_point() +
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
@@ -168,10 +190,13 @@ ggplot(ri_finishers,aes(x=month_year,y=rii)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle=35))
 
-monthly_rii_trend = aggregate(rii ~ month(ri_finishers$month_year),ri_finishers,median)
+monthly_rii_trend = aggregate(rii ~ month(fig4$month_year),
+                              ri_finishers,median)
+
 names(monthly_rii_trend) = c("month","median_rii")
 
-ggplot(monthly_rii_trend,aes(x=month,y=median_rii))+
+ggplot(monthly_rii_trend,
+       aes(x=month,y=median_rii))+
   geom_point()+
   geom_line()+
   scale_x_continuous(breaks=1:12,labels=month.name[1:12]) +
@@ -191,7 +216,7 @@ for(y in uniq.years){
   temp.df = dt_parkrun[dt_parkrun$year==y, ]
   glm.temp = glm(finishers ~imd_score,temp.df,offset = log(total_pop),family = poisson(link="log"))
   pred.temp = predict(glm.temp,newdata = data.frame(imd_score = IMD_RANGE,
-                                                    total_pop = mean( log(df$total_pop))),type="response")
+                                                    total_pop = mean( log(temp.df$total_pop))),type="response")
   tb_ratio.temp = pred.temp[1] / pred.temp[2]
   res.df = data.frame(year=y,rii = tb_ratio.temp)
   ri_finishers.y = rbind(ri_finishers.y,res.df)
@@ -205,7 +230,7 @@ ri_finishers.y
 
 
 
-
+# R.S. What does this do? can't get it to work.
 
 
 runs_by_imd_shares = dcast(data = runs_by_imd,formula = month_year ~ imd_decile,value.var = "finishers") 
