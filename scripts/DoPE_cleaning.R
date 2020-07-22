@@ -39,8 +39,8 @@ source.all(path = "R")
 # 1. parkrun event locations
 
 event_locations = read.csv("rawdata/event_info_20181231.csv") # read in data
+event_locations$Estblsh = as.Date(event_locations$Estblsh,"%d/%m/%Y") # convert date
 event_locations$month_year = substr(event_locations$Estblsh,1,7) # get month and year
-event_locations$Estblsh = as.Date(event_locations$Estblsh) # convert date
 
 # 2. 2015 IMD data: imd, total population and percent non working age.  
 
@@ -89,7 +89,7 @@ runs_df = runs_df[grep(pattern = "E",lsoa)] # select LSOAs in England only
 runs_df$month_year = substr(runs_df$date,1,7) # create a month & year variable
 runs_df$date = as.Date(unclass(runs_df$date),format="%Y-%m-%d") # convert to Date class
 runs_df = runs_df[weekdays(runs_df$date) == "Saturday"] # restrict to saturday events only
-runs_df = runs_df[runs_df$date <= as.Date("2018-12-31"),] # restrict to events before 2019
+runs_df = runs_df[runs_df$date <= as.Date("2019-12-31"),] # restrict to events before 2019
 runs_df = runs_df[,.(finishers = sum(finishers)),by = c("month_year","lsoa")]
 
 # merge template fill_dat with runs data.
@@ -165,7 +165,7 @@ lsoa_df_monthly$access = as.numeric(lsoa_df_monthly$access)
 #=========#
 
 # save files to cleandata
-saveRDS(object = lsoa_df_monthly,file = "cleandata/lsoa_df_monthly.Rds")
+saveRDS(object = lsoa_df_monthly,file = "cleandata/lsoa_df_monthly19.Rds")
 # PS: the .feather is 309 mb?!
 # write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather.feather")
 

@@ -26,7 +26,7 @@ source.all(path = "R")
 # load data
 #=====#
 
-dt_parkrun <- readRDS("cleandata/lsoa_df_monthly.Rds")
+dt_parkrun <- readRDS("cleandata/lsoa_df_monthly19.Rds")
 dt_parkrun$year = substr(x = dt_parkrun$month_year,start = 1,stop = 4) %>% as.numeric # create year variable
 
 

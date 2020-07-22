@@ -26,7 +26,7 @@ source.all(path = "R")
 # load data
 #=====#
 
-dt_parkrun_month <- readRDS("cleandata/lsoa_df_monthly.Rds")
+dt_parkrun_month <- readRDS("cleandata/lsoa_df_monthly19.Rds")
 dt_parkrun_month$year = substr(x = dt_parkrun_month$month_year,start = 1,stop = 4) %>% as.numeric # create year variable
 
 #====#
@@ -69,7 +69,7 @@ f_model = function(x) {
 #=====#
 
 # store as models
-models <- lapply(X = 2010:2018, 
+models <- lapply(X = 2010:2019, 
                  FUN = f_model)
 
 #=====#
@@ -85,8 +85,9 @@ stargazer(models[[1]],
           models[[7]],
           models[[8]],
           models[[9]],
+          models[[10]],
           header = FALSE,
-          column.labels	= paste(2010:2018),
+          column.labels	= paste(2010:2019),
           ci=FALSE, ci.level=0.95, #font.size= 9, 
           title="Poisson Log-link GLM Results",
           dep.var.labels = "Participation",
@@ -96,8 +97,8 @@ stargazer(models[[1]],
                                "Distance(km)",
                                "Non-working-age"),
           type = "html",
-          apply.coef = exp,
-          apply.se   = exp,
+          #apply.coef = exp,
+          #apply.se   = exp,
           out = "outputs/results.html")
 
 
