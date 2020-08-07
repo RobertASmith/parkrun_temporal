@@ -35,21 +35,34 @@ dt_parkrun$year = substr(x = dt_parkrun$month_year,start = 1,stop = 4) %>% as.nu
 #====#
 imd_quintiles_cuts = quantile(dt_parkrun$imd_score,probs = seq(0,1,0.2))
 dt_parkrun$imd_q5 = cut(dt_parkrun$imd_score, imd_quintiles_cuts, include.lowest = T)
-levels(dt_parkrun$imd_q5) =  c("Least deprived 20%","Less deprived 20%", "Median 20%", "More deprived 20%", "Most deprived 20%")
+levels(dt_parkrun$imd_q5) =  c("Least deprived 20%","4", "3", "2", "Most deprived 20%")
 imd_colors = c("orangered","orange","yellow3","yellowgreen","lawngreen")
-imd_colors = imd_colors[length(imd_colors):1]
+imd_colors = imd_colors[1:length(imd_colors)]
+# reverse order as per steve's comments
+dt_parkrun$imd_q5 <- factor(dt_parkrun$imd_q5,levels = rev(c("Least deprived 20%","4", "3", "2", "Most deprived 20%")))
 
 #=====#
 # Figure 1: nearest distances by imd by month year
 #=====#
 fig1_df = agg_parkrun_stat(dt_parkrun,y="access")
-plot1 = ggplot(fig1_df,aes(x=plot_date,y=access,col=imd_q5)) +
+plot1 = ggplot(fig1_df,aes(x=plot_date,
+                           y=access,
+                           col=imd_q5)) +
   geom_point(size=0.2)+
   geom_line() +
   scale_color_manual(values=c(imd_colors,1),name="IMD quintile") +
   ylab("Mean distance to the nearest parkrun event (km)") +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y",name="") +
-  theme_minimal()
+  scale_y_continuous(trans = log2_trans()) +
+  theme_classic()+
+  theme(legend.justification = c(1, 1), 
+        legend.position = c(0.8, 0.8),
+        legend.background = element_rect(fill = "transparent"),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16),
+        axis.text = element_text(size=14),
+        axis.title=element_text(size=16))
+
 
 # store in outputs
 ggsave(plot = plot1,width = 10,
@@ -76,17 +89,32 @@ stargazer(summary = FALSE,
 #=====#
 
 fig2_df = agg_parkrun_stat(dt_parkrun,y="finishers")
-plot2 <- ggplot(fig2_df,aes(x=plot_date,y=finishers,col=imd_q5)) +
-  # geom_point(size=0.2)+
+#fig2_df$imd_q5 <- factor(fig2_df$imd_q5,
+#                  levels = c("Most deprived 20%","2","3","4","Least deprived 20%","Overall"))
+#fig2_df$imd_q5[fig2_df$imd_q5 != "Overall"] <- factor(fig2_df$imd_q5[fig2_df$imd_q5 != "Overall"],
+#                                                      levels = rev(levels(fig2_df$imd_q5[fig2_df$imd_q5 != "Overall"])))
+
+plot2 <- ggplot(fig2_df,aes(x=plot_date,
+                            y=finishers,
+                            col=imd_q5)) +
+  ylab(label = "Monthly finishers per 1000 residents")+
   geom_line(alpha=0.7,size=0.3) +
   geom_smooth(alpha=1,se=F) +
   scale_color_manual(values=c(imd_colors,1),name="IMD quintile") +
   # ylab("Mean distance to the nearest parkrun event") +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y",name="") +
-  theme_minimal()
+  theme_classic()+
+  theme(legend.justification = c(1, 1), 
+        legend.position = c(0.3, 0.8),
+        legend.background = element_rect(fill = "transparent"),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16),
+        axis.text = element_text(size=14),
+        axis.title=element_text(size=16))
 
 # store in outputs
-ggsave(plot = plot2,width = 10,
+ggsave(plot = plot2,
+       width = 10,
        filename = "outputs/Figure2_participation.png")
 
 
