@@ -96,10 +96,11 @@ stargazer(models[[1]],
                                "Pop Density",
                                "Distance(km)",
                                "Non-working-age"),
-          type = "html",
+          type = "latex"#,
           #apply.coef = exp,
           #apply.se   = exp,
-          out = "outputs/results.html")
+          #out = "outputs/results.html"
+          )
 
 
 #=============
