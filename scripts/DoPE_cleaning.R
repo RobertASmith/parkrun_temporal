@@ -74,12 +74,12 @@ lsoa_ethnicity = fread(input = "rawdata/Ethnicity_data/LSOA_Ethnicity.csv",
                        stringsAsFactors = F)
 lsoa_ethnicity = lsoa_ethnicity[,
                                 .(lsoa = `geography code`,
-                                  perc_bme = 1- (`Sex: All persons; Age: All categories: Age; Ethnic Group: White: Total; measures: Value`/
+                                  ethnic_density = 1- (`Sex: All persons; Age: All categories: Age; Ethnic Group: White: English/Welsh/Scottish/Northern Irish/British; measures: Value`/
                                                    `Sex: All persons; Age: All categories: Age; Ethnic Group: All categories: Ethnic group; measures: Value`)
                                 )]
 lsoa_ethnicity = lsoa_ethnicity[!(grepl("W",lsoa_ethnicity$lsoa)),]   
 # proportion to percent
-lsoa_ethnicity$perc_bme = lsoa_ethnicity$perc_bme*100
+lsoa_ethnicity$ethnic_density = lsoa_ethnicity$ethnic_density*100
 
 
 # 5. parkrun participation data
@@ -110,7 +110,7 @@ lsoa_density = lsoa_density[grep(pattern = "E",`Code`),
                               pop_density = `People per Sq Km`)]
 lsoa_density$pop_density = as.numeric(gsub(",", "", lsoa_density$pop_density))
 # convert ppl / km^2 to 1,000* ppl / km^2 
-lsoa_density$pop_density = lsoa_density$pop_density / 1000
+lsoa_density$pop_density = lsoa_density$pop_density/1000
 
 
 # 8. Access - want to calculate for each lsoa and month-year what the distance to nearest event was on 15th!!
@@ -166,11 +166,5 @@ lsoa_df_monthly$access = as.numeric(lsoa_df_monthly$access)
 
 # save files to cleandata
 saveRDS(object = lsoa_df_monthly,file = "cleandata/lsoa_df_monthly19.Rds")
-# PS: the .feather is 309 mb?!
-# write_feather(x = lsoa_df_monthly,path = "cleandata/lsoa_df_monthly_feather.feather")
 
-# checking data-set
-# temp <- readRDS("cleandata/lsoa_df_monthly.Rds")
-
-# summary(temp)
 

@@ -1,10 +1,20 @@
 #===================#
-# DoPE TEMPORAL   
-# Robert Smith & Paul Schneider                           
+# Socioeconomic inequalities in parkrun access and participation: 2010 to 2019 
+# Robert Smith, Paul Schneider & Rami Cosulich
 # Institution: University of Sheffield                    
 # Contact: rasmith3@sheffield.ac.uk
-# Funder: Wellcome Trust
+# Funder: Wellcome Trust Doctoral Training Centre in Public Health Economics and Decision Science [108903]
 #=================#
+
+#============#
+# AIM:
+# This code uses the cleaned data with LSOA characteristics including:
+# parkrun finishers by month, imd score, imd_decile, population, 
+# percentage non working age, ethnic density, population density and access.
+# It creates the plots seen in the publication.
+# The other R file contains the code for the GLM Poisson regression model.
+#============#
+
 
 #============#
 #   SETUP
@@ -44,6 +54,7 @@ dt_parkrun$imd_q5 <- factor(dt_parkrun$imd_q5,levels = rev(c("Least deprived 20%
 #=====#
 # Figure 1: nearest distances by imd by month year
 #=====#
+
 fig1_df = agg_parkrun_stat(dt_parkrun,y="access")
 plot1 = ggplot(fig1_df,aes(x=plot_date,
                            y=access,
@@ -66,23 +77,26 @@ plot1 = ggplot(fig1_df,aes(x=plot_date,
 
 # store in outputs
 ggsave(plot = plot1,width = 10,
-       filename = "outputs/Figure1_access.png")
+       filename = "outputs/Figure1_access.pdf")
 
 #=====#
-# Table 1: nearest distances by imd by year
+# Table 4: nearest distances by imd by year
 #=====#
-tbl1_df = aggregate(access ~ imd_q5 + year, dt_parkrun, make_parkrun_tbl)
-tbl1_general = aggregate(access ~ year, dt_parkrun, make_parkrun_tbl)
-tbl1_general$imd_q5 = "Overall"
-tbl1 = rbind(tbl1_general,tbl1_df)
-tbl1 = reshape2::dcast(tbl1, imd_q5~year,value.var = "access")
-table1 = tbl1[c(6:1),]
+
+tbl4_df = aggregate(access ~ imd_q5 + year, dt_parkrun, make_parkrun_tbl)
+tbl4_general = aggregate(access ~ year, dt_parkrun, make_parkrun_tbl)
+tbl4_general$imd_q5 = "Overall"
+tbl4 = rbind(tbl4_general,tbl4_df)
+tbl4 = reshape2::dcast(tbl4, imd_q5~year,value.var = "access")
+table4 = tbl4[c(6,5,1,2,3,4),]
 
 # store in outputs
 stargazer(summary = FALSE,
-          x = table1,
-          format = "html",
-          out = "outputs/Table1_access.html")
+          x = table4,
+          title = "Mean geodesic distance to the nearest parkrun event by IMD quintile for each year from 2010 to 2019.",
+          format = "latex",
+          #out = "outputs/Table4_access.html",
+          notes = "1 = most socioeconomically deprived quintile, 5 = least socioeconomically deprived quintile, Standard errors in parentheses.")
 
 #=====#
 # Figure 2: parkrun participation by imd by month year
@@ -115,27 +129,29 @@ plot2 <- ggplot(fig2_df,aes(x=plot_date,
 # store in outputs
 ggsave(plot = plot2,
        width = 10,
-       filename = "outputs/Figure2_participation.png")
+       filename = "outputs/Figure2_participation.pdf")
 
 
 
 #=====#
-# Table 2: parkrun participation by imd by year
+# Table 5: parkrun participation by imd by year
 #=====#
 
-tbl2_df = aggregate(finishers ~ imd_q5 + year, dt_parkrun, make_parkrun_tbl)
-tbl2_general = aggregate(finishers ~ year, dt_parkrun, make_parkrun_tbl)
-tbl2_general$imd_q5 = "Overall"
-tbl2 = rbind(tbl2_general,tbl2_df)
-tbl2 = reshape2::dcast(tbl2, imd_q5~year,value.var = "finishers")
-table2 = tbl2[c(6:1),]
+tbl5_df = aggregate(finishers ~ imd_q5 + year, dt_parkrun, make_parkrun_tbl)
+tbl5_general = aggregate(finishers ~ year, dt_parkrun, make_parkrun_tbl)
+tbl5_general$imd_q5 = "Overall"
+tbl5 = rbind(tbl5_general,tbl5_df)
+tbl5 = reshape2::dcast(tbl5, imd_q5~year,value.var = "finishers")
+table5 = tbl5[c(6:1),]
 
 
 # store in outputs
 stargazer(summary = FALSE,
-          x = table2,
-          format = "html",
-          out = "outputs/Table2_participation.html")
+          x = table5,
+          title = "Mean monthly parkrun finishers per 1,000 persons by IMD quintile for each year from 2010 to 2019.",
+          format = "latex",
+          #out = "outputs/Table5_participation.html",
+          notes = "1 = most socioeconomically deprived quintile, 5 = least socioeconomically deprived quintile, Standard errors in parentheses.")
 
 
 # IMD RANGE
@@ -171,18 +187,20 @@ plot3 = ggplot(fig3,aes(x=month_year,y=rii)) +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
   ylab("RII - Distance to the nearest parkrun event") +
   xlab("Year")+
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle=35))
+  theme_classic() +
+  theme(axis.text   = element_text(size=14),
+        axis.title  = element_text(size=16),
+        axis.title.x = element_blank())
 
 # store in outputs
 ggsave(plot = plot3,width = 10,
-       filename = "outputs/Figure3_rii_access.png")
+       filename = "outputs/Figure3_rii_access.pdf")
 
 
 
 
 #=====#
-# numerical results: Ratio Index of Inequality: Access
+# Unused in publication - numerical results: Ratio Index of Inequality: Access
 #=====#
 
 tab3 = data.frame(year = unique(dt_parkrun$year))
@@ -247,12 +265,19 @@ plot4 <- ggplot(data = fig4,
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
   ylab("RII - Monthly parkrun participation ") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle=35))
+  theme_classic() +
+  theme(axis.text   = element_text(size=14),
+        axis.title  = element_text(size=16),
+        axis.title.x = element_blank())
 
 # store in outputs
 ggsave(plot = plot4,width = 10,
-       filename = "outputs/Figure4_rii_participation.png")
+       filename = "outputs/Figure4_rii_participation.pdf")
+
+
+# ====
+# unused in publication
+# ====
 
 
 # looking into the month effect:
@@ -272,7 +297,7 @@ ggplot(monthly_rii_trend,
 
 
 #=====#
-# numerical results: Ratio Index of Inequality: Participation
+# Unused in publication: Ratio Index of Inequality: Participation table
 #=====#
 
 uniq.years = unique(dt_parkrun$year)
@@ -293,32 +318,11 @@ ri_finishers.y
 # store in outputs
 stargazer(summary = FALSE,
           x = ri_finishers.y,
-          format = "html",
-          out = "outputs/Table_RII_part.html")
+          format = "latex"#,
+          #out = "outputs/Table_RII_part.html"
+          )
 
 
-
-
-
-
-
-# R.S. What does this do? can't get it to work.
-
-
-runs_by_imd_shares = dcast(data = runs_by_imd,formula = month_year ~ imd_decile,value.var = "finishers") 
-runs_by_imd_shares$totals = rowSums(runs_by_imd_shares[,-1])
-runs_by_imd_shares = as.data.table(runs_by_imd_shares)
-runs_by_imd_shares2 = runs_by_imd_shares[, lapply(.SD, function(x){x/totals}), .SDcols = 2:11]
-runs_by_imd_shares2$month_year = runs_by_imd_shares$month_year
-runs_by_imd_shares2 = melt(runs_by_imd_shares2,id.vars = "month_year")
-
-ggplot(runs_by_imd_shares2,aes(x=month_year,y=value,fill=variable)) +
-  geom_area(col="black",size=0.2,alpha=0.75) +
-  scale_fill_manual(values = imd_colors,name="IMD decile",labels=imd_labels) +
-  scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
-  ylab("Share in total runs per month by IMD deciles") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle=35))
 
 
 
