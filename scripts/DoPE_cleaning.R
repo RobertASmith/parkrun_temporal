@@ -1,10 +1,17 @@
 #===================#
-# DoPE TEMPORAL   
-# Robert Smith & Paul Schneider                           
+# Socioeconomic inequalities in parkrun access and participation: 2010 to 2019 
+# Robert Smith, Paul Schneider & Rami Cosulich
 # Institution: University of Sheffield                    
 # Contact: rasmith3@sheffield.ac.uk
-# Funder: Wellcome Trust
+# Funder: Wellcome Trust Doctoral Training Centre in Public Health Economics and Decision Science [108903]
 #=================#
+
+#============#
+# AIM:
+# This code takes data from a variety of sources, cleans that data and saves a single file.
+# the weekly level data is not open access, we aggregate to month and make the monthly data open access.
+#============#
+
 
 #============#
 #   SETUP
