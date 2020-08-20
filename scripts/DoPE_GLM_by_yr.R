@@ -82,7 +82,7 @@ f_model = function(x) {
     
     if(model == "zeroinf"){
  
-    model = pscl::zeroinfl(formula = finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age | imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age,
+    model <- zeroinfl(formula = finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age | mn_dstn,
              data = dt_parkrun_yr,
              offset = log(total_pop),
              subset = which(dt_parkrun_yr$year == x)
@@ -180,9 +180,10 @@ stargazer(models_quasipoisson[[1]],
 )
 
 # Zero Inflated Regression
-lapply(X = 1:10,
-       FUN = function(x){
-         
-         out = models_zeroinf[[x]]$coefficients$zero["imd_score"]
-         return(out)
-       })
+#lapply(X = 1:10,
+#       FUN = function(x){
+#         
+#         out = models_zeroinf[[x]]$coefficients$zero["imd_score"]
+#         return(out)
+#       })
+
