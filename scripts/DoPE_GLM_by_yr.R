@@ -23,7 +23,7 @@
 rm(list = ls())
 
 # load all necessary packages
-pacman::p_load(dplyr,reshape2,data.table,date,
+pacman::p_load(dplyr,reshape2,data.table,date,pscl,
                raster,geosphere,ggplot2,scales,
                RColorBrewer,miceadds,lubridate,
                feather,stargazer, kableExtra,jtools,lme4)
@@ -60,6 +60,7 @@ dt_parkrun_yr = dt_parkrun_month[,.(finishers = sum(finishers),
            by = c("year","lsoa")]
 
 
+
 #=====#
 # Create model function
 #=====#
@@ -77,7 +78,16 @@ f_model = function(x) {
     subset =  which(dt_parkrun_yr$year == x)
   )
   
-  }else{
+  }else{ 
+    
+    if(model == "zeroinf"){
+ 
+    model = pscl::zeroinfl(formula = finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age | imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age,
+             data = dt_parkrun_yr,
+             offset = log(total_pop),
+             subset = which(dt_parkrun_yr$year == x)
+             )
+    }else{
     
   model = glm(
     finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age,
@@ -86,11 +96,12 @@ f_model = function(x) {
     offset = log(total_pop),
     subset =  which(dt_parkrun_yr$year == x)
   )
-  
-  }
+    } # close second else
+
+} # close first else
   
   return(model)
-}
+} # finish function
 
 #=====#
 # Run model for each year
@@ -98,6 +109,9 @@ f_model = function(x) {
 model = "quasi"
 # store as models
 models_quasipoisson <- lapply(X = 2010:2019,FUN = f_model)
+
+model = "zeroinf"
+models_zeroinf <- lapply(X = 2010:2019,FUN = f_model)
 
 model = "poisson"
 models_poisson <- lapply(X = 2010:2019,FUN = f_model)
@@ -164,3 +178,11 @@ stargazer(models_quasipoisson[[1]],
           #apply.se   = exp,
           #out = "outputs/results_quasi.html"
 )
+
+# Zero Inflated Regression
+lapply(X = 1:10,
+       FUN = function(x){
+         
+         out = models_zeroinf[[x]]$coefficients$zero["imd_score"]
+         return(out)
+       })
