@@ -187,3 +187,32 @@ stargazer(models_quasipoisson[[1]],
 #         return(out)
 #       })
 
+stargazer(models_zeroinf[[1]], 
+          models_zeroinf[[2]], 
+          models_zeroinf[[3]],
+          models_zeroinf[[4]],
+          models_zeroinf[[5]],
+          models_zeroinf[[6]],
+          models_zeroinf[[7]],
+          models_zeroinf[[8]],
+          models_zeroinf[[9]],
+          models_zeroinf[[10]],
+          header = FALSE,
+          column.labels	= paste(2010:2019),
+          ci=FALSE, 
+          ci.level=0.95, #font.size= 9, 
+          title="Results of the Zero Inflated Poisson log-link generalised linear model for each year from 2010 to 2019.",
+          dep.var.labels = "Participation",
+          covariate.labels = c("IMD Score",
+                               "Ethnic-Density",
+                               "Pop Density",
+                               "Distance(km)",
+                               "Non-working-age"),
+          type = "latex",
+          notes.append = T,
+          notes = "1 = most socioeconomically deprived quintile, 5 = least socioeconomically deprived quintile, Standard errors in parentheses.",
+          #apply.coef = exp,
+          #apply.se   = exp,
+          out = "outputs/results_ZIpoisson.html"
+)
+
