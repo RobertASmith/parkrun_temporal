@@ -104,8 +104,14 @@ f_model = function(x) {
 } # finish function
 
 #=====#
-# Run model for each year
+# Run Poisson regression models
+# 
+# 3 models:
+# Quasi-Poisson model
+# Zero-Inflated-Poisson model
+# Poisson model
 #=====#
+
 model = "quasi"
 # store as models
 models_quasipoisson <- lapply(X = 2010:2019,FUN = f_model)
@@ -117,7 +123,7 @@ model = "poisson"
 models_poisson <- lapply(X = 2010:2019,FUN = f_model)
 
 #=====#
-# Create Stargazer plot
+# Table 3
 #=====#
 
 # manually output this to glm_by_year - must be a better way.
@@ -150,8 +156,11 @@ stargazer(models_poisson[[1]],
           #out = "outputs/results_poisson.html"
           )
 
-#Quasiregression
-# Poisson Regression
+#=====#
+# Table 6 - quasi-poisson regression model
+#=====#
+
+
 stargazer(models_quasipoisson[[1]], 
           models_quasipoisson[[2]], 
           models_quasipoisson[[3]],
@@ -186,6 +195,11 @@ stargazer(models_quasipoisson[[1]],
 #         out = models_zeroinf[[x]]$coefficients$zero["imd_score"]
 #         return(out)
 #       })
+
+#=====#
+# Zero Inflated Poisson regression model - not included in publication.
+#=====#
+
 
 stargazer(models_zeroinf[[1]], 
           models_zeroinf[[2]], 
