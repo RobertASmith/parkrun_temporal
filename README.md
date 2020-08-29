@@ -2,6 +2,7 @@
 
 ## Authors
 Robert A. Smith^, Paul P. Schneider, Rami Cosulich, Helen Quirk, Alice M. Bullas, Steve J. Haak and Elizabeth Goyder
+
 ^corresponding author: rasmith3@sheffield.ac.uk
 
 ## Objectives
