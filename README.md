@@ -1,9 +1,9 @@
 # Reducing socioeconomic inequalities in access to and participation in community-based running and walking activities: a longitudinal ecological study of parkrun events 2010 to 2019.
 
 ## Authors
-Robert A. Smith^1^, Paul P. Schneider, Rami Cosulich, Helen Quirk, Alice M. Bullas, Steve J. Haak and Elizabeth Goyder
+Robert A. Smith\*, Paul P. Schneider, Rami Cosulich, Helen Quirk, Alice M. Bullas, Steve J. Haak and Elizabeth Goyder
 
-^1^corresponding author: rasmith3@sheffield.ac.uk
+\*corresponding author: rasmith3@sheffield.ac.uk
 
 ## Objectives
 To conduct a longitudinal ecological analysis of the geographic access to and participation in free weekly outdoor physical activity events (“parkrun”) in England from 2010 to 2019, and related socioeconomic and ethnic inequalities, to inform policies to support participation in physically active community events.
