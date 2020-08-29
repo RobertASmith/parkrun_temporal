@@ -15,3 +15,11 @@ Mean distance to the nearest parkrun event decreased from 34.1 km in 2010, to 4.
 
 ## Conclusions
 Access to and participation in parkrun events has increased over the past 10 years. The period can be split into two distinct phases: from 2010 to 2013 increases in participation and improvements in access were super-linear, and inequality in participation fell dramatically. From 2013 to 2019 increases in participation were linear, and inequality in participation remained stable. Despite parkrun’s ambitions of creating inclusive events and engaging with deprived communities, the socioeconomic gradient in participation rates remained high and stable since 2013. Gaining a better understanding of the reasons why parkrun grew so quickly may be useful for other physical activity movements, while further analysis of the relatively lower participation rates in areas with higher socioeconomic deprivation is important for developing initiatives to encourage physical activity in these communities.
+
+
+R.S., P.S. & R.C. are joint funded by the Wellcome Trust Doctoral Training Centre in Public Health Economics and Decision Science [108903]
+and the University of Sheffield. H.Q. is funded by an NIHR School of Public Health Research (SPHR) post-doctoral launching fellowship. The
+funders had no role in study design, data collection and analysis, decision to publish, or preparation of the manuscript.
+
+We would like to thank Mike Graney (Head of Analysis at parkrun) and Chrissie Wellington (Global Head of Health and Wellbeing at parkrun)
+for providing area level parkrun participation data.
