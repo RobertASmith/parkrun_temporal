@@ -1,7 +1,7 @@
 # Reducing socioeconomic inequalities in access to and participation in community-based running and walking activities: a longitudinal ecological study of parkrun events 2010 to 2019.
 
 ## Authors
-Robert A. Smith\*, Paul P. Schneider, Rami Cosulich, Helen Quirk, Alice M. Bullas, Steve J. Haak and Elizabeth Goyder
+[Robert A. Smith](https://www.linkedin.com/in/robert-smith-53b28438/)\*, Paul P. Schneider, Rami Cosulich, Helen Quirk, Alice M. Bullas, Steve J. Haak and Elizabeth Goyder
 
 \*corresponding author: rasmith3@sheffield.ac.uk
 
