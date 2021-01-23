@@ -55,7 +55,7 @@ dt_parkrun_yr = dt_parkrun_month[,.(finishers = sum(finishers),
               pop_density = mean(pop_density),
               ethnic_density = mean(ethnic_density),
               total_pop = mean(total_pop),
-              perc_non_working_age = mean(perc_non_working_age)
+              perc_non_working_age = mean(perc_non_working_age)    # R.S. lets change this
               ),
            by = c("year","lsoa")]
 
@@ -65,17 +65,19 @@ dt_parkrun_yr = dt_parkrun_month[,.(finishers = sum(finishers),
 # Create model function
 #=====#
 
-f_model = function(x) {
+f_model = function(x, 
+                   dt = dt_parkrun_yr, 
+                   model = "poisson") {
   
   if(model == "quasi"){
   
   # create model based on data.
   model = glm(
     finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age,
-    data = dt_parkrun_yr,
+    data = dt,
     family = quasipoisson(link = "log"),
     offset = log(total_pop),
-    subset =  which(dt_parkrun_yr$year == x)
+    subset =  which(dt$year == x)
   )
   
   }else{ 
@@ -83,18 +85,18 @@ f_model = function(x) {
     if(model == "zeroinf"){
  
     model <- zeroinfl(formula = finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age | mn_dstn,
-             data = dt_parkrun_yr,
+             data = dt,
              offset = log(total_pop),
-             subset = which(dt_parkrun_yr$year == x)
+             subset = which(dt$year == x)
              )
     }else{
     
   model = glm(
     finishers ~ imd_score + ethnic_density +  pop_density + mn_dstn + perc_non_working_age,
-    data = dt_parkrun_yr,
+    data = dt,
     family = poisson(link = "log"),
     offset = log(total_pop),
-    subset =  which(dt_parkrun_yr$year == x)
+    subset =  which(dt$year == x)
   )
     } # close second else
 
@@ -229,4 +231,103 @@ stargazer(models_zeroinf[[1]],
           #apply.se   = exp,
           out = "outputs/results_ZIpoisson.html"
 )
+
+
+
+
+
+#=====#
+# Table 6 - Poisson Regression model by rural/urban
+#=====#
+
+# rural urban classification
+lsoa_ruralurban <- fread("rawdata/LSOA_Rural_Urban_Classification_2011.csv"
+                         )[,.(lsoa = code, urban = RUC11CD %in% c("A1","B1", "C1","C2"))]
+
+#merge two datasets
+dt_parkrun_month_urban_rural = merge(x = dt_parkrun_month,
+      y = lsoa_ruralurban,
+      by = "lsoa")
+
+# aggregate by year
+dt_parkrun_yr = dt_parkrun_month_urban_rural[,.(finishers = sum(finishers),
+                                    imd_score = mean(imd_score),
+                                    mn_dstn = mean(access),
+                                    pop_density = mean(pop_density),
+                                    ethnic_density = mean(ethnic_density),
+                                    total_pop = mean(total_pop),
+                                    perc_non_working_age = mean(perc_non_working_age),
+                                    urban = mean(urban)),
+                                    by = c("year","lsoa")]
+
+# URBAN #
+models_poisson_urban <- lapply(X = 2010:2019,
+                         FUN = function(x){
+                           f_model(model = "poisson", x = x, dt = dt_parkrun_yr[urban == 1])
+                          })
+
+# Poisson Regression
+stargazer(models_poisson_urban[[1]], 
+          models_poisson_urban[[2]], 
+          models_poisson_urban[[3]],
+          models_poisson_urban[[4]],
+          models_poisson_urban[[5]],
+          models_poisson_urban[[6]],
+          models_poisson_urban[[7]],
+          models_poisson_urban[[8]],
+          models_poisson_urban[[9]],
+          models_poisson_urban[[10]],
+          header = FALSE,
+          column.labels	= paste(2010:2019),
+          ci=FALSE, 
+          ci.level=0.95, #font.size= 9, 
+          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019.",
+          dep.var.labels = "Participation",
+          covariate.labels = c("IMD Score",
+                               "Ethnic-Density",
+                               "Pop Density",
+                               "Distance(km)",
+                               "Non-working-age"),
+          type = "html",
+          #apply.coef = exp,
+          #apply.se   = exp,
+          out = "outputs/results_poisson_urban.html"
+)
+
+
+# RURAL 
+models_poisson_rural <- lapply(X = 2010:2019,
+                               FUN = function(x){
+                                 f_model(model = "poisson", x = x, dt = dt_parkrun_yr[urban == 0])
+                               })
+
+stargazer(models_poisson_rural[[1]], 
+          models_poisson_rural[[2]], 
+          models_poisson_rural[[3]],
+          models_poisson_rural[[4]],
+          models_poisson_rural[[5]],
+          models_poisson_rural[[6]],
+          models_poisson_rural[[7]],
+          models_poisson_rural[[8]],
+          models_poisson_rural[[9]],
+          models_poisson_rural[[10]],
+          header = FALSE,
+          column.labels	= paste(2010:2019),
+          ci=FALSE, 
+          ci.level=0.95, #font.size= 9, 
+          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019.",
+          dep.var.labels = "Participation",
+          covariate.labels = c("IMD Score",
+                               "Ethnic-Density",
+                               "Pop Density",
+                               "Distance(km)",
+                               "Non-working-age"),
+          type = "html",
+          #apply.coef = exp,
+          #apply.se   = exp,
+          out = "outputs/results_poisson_rural.html"
+)
+
+
+
 
