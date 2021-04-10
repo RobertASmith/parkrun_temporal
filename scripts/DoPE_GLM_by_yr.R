@@ -26,10 +26,14 @@ rm(list = ls())
 pacman::p_load(dplyr,reshape2,data.table,date,pscl,
                raster,geosphere,ggplot2,scales,
                RColorBrewer,miceadds,lubridate,
-               feather,stargazer, kableExtra,jtools,lme4)
+               feather,stargazer, kableExtra,jtools,lme4, 
+               viridis)
 
 # source all functions in R folder
 source.all(path = "R")
+
+# decide whether to save updates to plots
+savePlots <- F
 
 #=====#
 # load data
@@ -58,6 +62,28 @@ dt_parkrun_yr = dt_parkrun_month[,.(finishers = sum(finishers),
               perc_non_working_age = mean(perc_non_working_age)    # R.S. lets change this
               ),
            by = c("year","lsoa")]
+
+#====
+# make facet plots of descriptive stats & save to file
+#====
+
+plots <- makeFacetHist(dt = dt_parkrun_yr)
+
+if(savePlots == T){
+
+ggsave(filename = "outputs/densityVars.png", 
+       plot = plots$variablesPlot,
+       width = 9)
+
+ggsave(filename = "outputs/densityFinishers.png", 
+       plot = plots$finishersPlot,
+       width = 9)
+
+ggsave(filename = "outputs/densityDistance.png", 
+       plot = plots$distancePlot,
+       width = 9)
+
+}
 
 
 
@@ -148,10 +174,10 @@ stargazer(models_poisson[[1]],
           title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019.",
           dep.var.labels = "Participation",
           covariate.labels = c("IMD Score",
-                               "Ethnic-Density",
-                               "Pop Density",
+                               "Ethnic-Density (%)",
+                               "Pop Density (sqkm)",
                                "Distance(km)",
-                               "Non-working-age"),
+                               "Non-working-age (%)"),
           type = "latex"
           #apply.coef = exp,
           #apply.se   = exp,
@@ -180,10 +206,10 @@ stargazer(models_quasipoisson[[1]],
           title="Results of the quasipoisson log-link generalised linear model for each year from 2010 to 2019.",
           dep.var.labels = "Participation",
           covariate.labels = c("IMD Score",
-                               "Ethnic-Density",
-                               "Pop Density",
+                               "Ethnic-Density (%)",
+                               "Pop Density (sqkm)",
                                "Distance(km)",
-                               "Non-working-age"),
+                               "Non-working-age (%)"),
           type = "latex"
           #apply.coef = exp,
           #apply.se   = exp,
@@ -220,10 +246,10 @@ stargazer(models_zeroinf[[1]],
           title="Results of the Zero Inflated Poisson log-link generalised linear model for each year from 2010 to 2019.",
           dep.var.labels = "Participation",
           covariate.labels = c("IMD Score",
-                               "Ethnic-Density",
-                               "Pop Density",
+                               "Ethnic-Density (%)",
+                               "Pop Density (sqkm)",
                                "Distance(km)",
-                               "Non-working-age"),
+                               "Non-working-age (%)"),
           type = "latex",
           notes.append = T,
           notes = "1 = most socioeconomically deprived quintile, 5 = least socioeconomically deprived quintile, Standard errors in parentheses.",
@@ -237,7 +263,7 @@ stargazer(models_zeroinf[[1]],
 
 
 #=====#
-# Table 6 - Poisson Regression model by rural/urban
+# Table 7 - Poisson Regression model by rural/urban
 #=====#
 
 # rural urban classification
@@ -281,17 +307,17 @@ stargazer(models_poisson_urban[[1]],
           column.labels	= paste(2010:2019),
           ci=FALSE, 
           ci.level=0.95, #font.size= 9, 
-          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019.",
+          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019 - URBAN LOCATIONS ONLY",
           dep.var.labels = "Participation",
           covariate.labels = c("IMD Score",
-                               "Ethnic-Density",
-                               "Pop Density",
+                               "Ethnic-Density (%)",
+                               "Pop Density (sqkm)",
                                "Distance(km)",
-                               "Non-working-age"),
-          type = "html",
+                               "Non-working-age (%)"),
+          type = "latex"#,
           #apply.coef = exp,
           #apply.se   = exp,
-          out = "outputs/results_poisson_urban.html"
+          #out = "outputs/results_poisson_urban.html"
 )
 
 
@@ -315,18 +341,34 @@ stargazer(models_poisson_rural[[1]],
           column.labels	= paste(2010:2019),
           ci=FALSE, 
           ci.level=0.95, #font.size= 9, 
-          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019.",
+          title="Results of the Poisson log-link generalised linear model for each year from 2010 to 2019 - RURAL LOCATIONS ONLY ",
           dep.var.labels = "Participation",
           covariate.labels = c("IMD Score",
-                               "Ethnic-Density",
-                               "Pop Density",
+                               "Ethnic-Density (%)",
+                               "Pop Density (sqkm)",
                                "Distance(km)",
-                               "Non-working-age"),
-          type = "html",
+                               "Non-working-age (%)"),
+          type = "latex"#,
           #apply.coef = exp,
           #apply.se   = exp,
-          out = "outputs/results_poisson_rural.html"
+          #out = "outputs/results_poisson_rural.html"
 )
+
+#====#
+# APPENDIX COLOUR PLOTS
+#====#
+
+# create colour plots for years 2010, 2013, 2016, 2019
+
+colourPlots <- makeColourFacet()
+
+if(savePlots == T){
+  
+  ggsave(plot = colourPlots,
+         filename = "outputs/colourPlot_facets.png",
+         width = 8, height = 12)
+  
+}
 
 
 
