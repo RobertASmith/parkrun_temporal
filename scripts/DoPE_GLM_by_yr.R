@@ -142,13 +142,17 @@ f_model = function(x,
 
 model = "quasi"
 # store as models
-models_quasipoisson <- lapply(X = 2010:2019,FUN = f_model)
+models_quasipoisson <- lapply(X = 2010:2019,
+                              FUN = f_model,
+                              model = "quasi")
 
 model = "zeroinf"
-models_zeroinf <- lapply(X = 2010:2019,FUN = f_model)
+models_zeroinf <- lapply(X = 2010:2019,
+                         FUN = f_model)
 
 model = "poisson"
-models_poisson <- lapply(X = 2010:2019,FUN = f_model)
+models_poisson <- lapply(X = 2010:2019,
+                         FUN = f_model)
 
 #=====#
 # Table 3
@@ -179,9 +183,9 @@ output_stargazer(output.file = "outputs/Pois_GLM.txt",
                                                 "Pop Density (sqkm)",
                                                 "Distance(km)"),
                                                 #"Non-working-age (%)"),
-                           type = "latex"
+                           type = "latex"#,
                            #apply.coef = exp,
-                           #apply.se   = exp,
+                           #apply.se   = exp
                            #out = "outputs/results_poisson.html"
                            ))
 
