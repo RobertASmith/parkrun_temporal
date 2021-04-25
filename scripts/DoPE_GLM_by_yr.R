@@ -33,14 +33,16 @@ pacman::p_load(dplyr,reshape2,data.table,date,pscl,
 source.all(path = "R")
 
 # decide whether to save updates to plots
-savePlots <- F
+savePlots <- T
 
 #=====#
 # load data
 #=====#
 
 dt_parkrun_month <- readRDS("cleandata/lsoa_df_monthly19.Rds")
-dt_parkrun_month$year = substr(x = dt_parkrun_month$month_year,start = 1,stop = 4) %>% as.numeric # create year variable
+dt_parkrun_month$year = substr(x = dt_parkrun_month$month_year,
+                               start = 1,
+                               stop = 4) %>% as.numeric # create year variable
 
 #====#
 # descriptive stats
@@ -152,7 +154,10 @@ models_zeroinf <- lapply(X = 2010:2019,
 
 model = "poisson"
 models_poisson <- lapply(X = 2010:2019,
-                         FUN = f_model)
+                         FUN = function(x){f_model(x = x,
+                                                   model = "poisson",
+                                                   dt = dt_parkrun_yr)}
+                         )
 
 #=====#
 # Table 3
@@ -183,9 +188,9 @@ output_stargazer(output.file = "outputs/Pois_GLM.txt",
                                                 "Pop Density (sqkm)",
                                                 "Distance(km)"),
                                                 #"Non-working-age (%)"),
-                           type = "latex"#,
-                           #apply.coef = exp,
-                           #apply.se   = exp
+                           type = "latex",
+                           apply.coef = exp,
+                           apply.se   = exp
                            #out = "outputs/results_poisson.html"
                            ))
 
