@@ -188,9 +188,9 @@ output_stargazer(output.file = "outputs/Pois_GLM.txt",
                                                 "Pop Density (sqkm)",
                                                 "Distance(km)"),
                                                 #"Non-working-age (%)"),
-                           type = "latex",
-                           apply.coef = exp,
-                           apply.se   = exp
+                           type = "latex"#,
+                           #apply.coef = exp,
+                           #apply.se   = exp
                            #out = "outputs/results_poisson.html"
                            ))
 
