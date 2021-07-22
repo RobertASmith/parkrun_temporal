@@ -28,3 +28,7 @@ funders had no role in study design, data collection and analysis, decision to p
 
 We would like to thank Mike Graney (Head of Analysis at parkrun) and Chrissie Wellington (Global Head of Health and Wellbeing at parkrun)
 for providing area level parkrun participation data.
+
+
+Data:
+- We provide our cleaned data by IMD quintile - for access to the raw data utilised in this code please contact Mike Graney at parkrunUK.
