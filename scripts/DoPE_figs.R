@@ -185,7 +185,7 @@ plot3 = ggplot(fig3,aes(x=month_year,y=rii)) +
   geom_point() +
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
-  ylab("RII - Distance to the nearest parkrun event") +
+  ylab("RII - Distance to the nearest parkrun event)") +
   xlab("Year")+
   theme_classic() +
   theme(axis.text   = element_text(size=14),
@@ -264,7 +264,7 @@ plot4 <- ggplot(data = fig4,
   geom_point() +
   geom_line() +
   scale_x_date(date_breaks = "1 year",date_labels = "%Y") +
-  ylab("RII - Monthly parkrun participation ") +
+  ylab("RII - Monthly parkrun participation") +
   theme_classic() +
   theme(axis.text   = element_text(size=14),
         axis.title  = element_text(size=16),
@@ -321,6 +321,10 @@ stargazer(summary = FALSE,
           format = "latex"#,
           #out = "outputs/Table_RII_part.html"
           )
+
+
+
+
 
 
 
