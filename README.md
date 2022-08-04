@@ -5,6 +5,10 @@
 
 \*corresponding author: rasmith3@sheffield.ac.uk
 
+To replicate the core of this analysis try running the script:
+
+[scripts/DoPE_GLM_by_yr.R](https://github.com/RobertASmith/parkrun_temporal/blob/master/scripts/DoPE_GLM_by_yr.R) 
+
 ## Objectives
 To conduct a longitudinal ecological analysis of the geographic access to and participation in free weekly outdoor physical activity events (“parkrun”) in England from 2010 to 2019, and related socioeconomic and ethnic inequalities, to inform policies to support participation in physically active community events.
 
